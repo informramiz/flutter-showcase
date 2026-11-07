@@ -32,7 +32,7 @@ void main() {
         find.byType(MaterialApp),
         matchesGoldenFile('goldens/error_view_$name.png'),
       );
-    });
+    }, tags: ['golden']);
   }
 
   testWidgets('EmptyView shows title and hint', (tester) async {
