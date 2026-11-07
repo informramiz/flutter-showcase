@@ -1,2 +1,4 @@
 #include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"
 #include "Generated.xcconfig"
+// arm64-only simulator: Xcode 27 lipo rejects multi-arch -verify_arch (Flutter 3.38)
+ARCHS[sdk=iphonesimulator*] = arm64
