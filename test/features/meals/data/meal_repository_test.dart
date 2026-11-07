@@ -21,7 +21,7 @@ void main() {
 
   test('search trims the query and maps DTOs to domain', () async {
     when(() => api.search('pasta')).thenAnswer(
-      (_) async => [MealDto.fromJson(mealJson(name: 'Pasta'))],
+      (_) async => [MealDto.fromJson(mealJson())],
     );
 
     final result = await repository.search('  pasta ');

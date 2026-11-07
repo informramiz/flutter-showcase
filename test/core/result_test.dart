@@ -28,7 +28,7 @@ void main() {
       );
       expect(result, isA<Err<int>>());
       expect(
-        () => result.getOrThrow(),
+        result.getOrThrow,
         throwsA(isA<NetworkFailure>()),
       );
     });

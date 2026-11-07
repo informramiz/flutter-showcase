@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_showcase/app.dart';
 import 'package:flutter_showcase/core/connectivity/connectivity_provider.dart';
+import 'package:flutter_showcase/core/result/result.dart';
 import 'package:flutter_showcase/core/storage/preferences_provider.dart';
 import 'package:flutter_showcase/features/meals/data/meal_repository_impl.dart';
+import 'package:flutter_showcase/features/meals/domain/meal.dart';
 import 'package:flutter_showcase/features/meals/domain/meal_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'fixtures.dart';
 
 class MockMealRepository extends Mock implements MealRepository {}
 
@@ -73,4 +78,21 @@ Future<void> pumpScreen(
     ),
   );
   await tester.pump();
+}
+
+/// A repository that returns [meals] for every list call.
+MockMealRepository stubbedRepository({
+  List<Meal> meals = const [pasta, curry],
+  List<String> categories = const ['Pasta', 'Chicken'],
+}) {
+  final repository = MockMealRepository();
+  when(repository.categories).thenAnswer((_) async => Success(categories));
+  when(() => repository.search(any())).thenAnswer((_) async => Success(meals));
+  when(
+    () => repository.byCategory(any()),
+  ).thenAnswer((_) async => Success(meals));
+  when(
+    () => repository.meal(any()),
+  ).thenAnswer((_) async => const Success(pastaDetail));
+  return repository;
 }
