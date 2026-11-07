@@ -42,10 +42,13 @@ Future<List<Meal>> meals(Ref ref) async {
   final query = ref.watch(searchQueryProvider).trim();
   final category = ref.watch(selectedCategoryProvider);
   final repository = ref.watch(mealRepositoryProvider);
+  // Fires when a newer keystroke rebuilds this provider.
+  var superseded = false;
+  ref.onDispose(() => superseded = true);
 
   if (query.isNotEmpty) {
     await Future<void>.delayed(searchDebounce);
-    if (!ref.mounted) return const [];
+    if (superseded) return const [];
     final found = (await repository.search(query)).getOrThrow();
     // Search results carry their category, so narrow them client-side.
     return category == null
