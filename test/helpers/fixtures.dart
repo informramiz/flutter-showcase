@@ -1,4 +1,4 @@
-import 'package:flutter_showcase/features/meals/domain/meal.dart';
+import 'package:flutter_showcase/domain/models/meal.dart';
 
 const pasta = Meal(
   id: '1',

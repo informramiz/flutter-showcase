@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_showcase/features/favourites/presentation/favourites_screen.dart';
-import 'package:flutter_showcase/features/meals/presentation/meal_detail_screen.dart';
-import 'package:flutter_showcase/features/meals/presentation/meals_screen.dart';
-import 'package:flutter_showcase/shared/home_shell.dart';
+import 'package:flutter_showcase/ui/core/widgets/home_shell.dart';
+import 'package:flutter_showcase/ui/favourites/favourites_screen.dart';
+import 'package:flutter_showcase/ui/meal_detail/meal_detail_screen.dart';
+import 'package:flutter_showcase/ui/meals/meals_screen.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 

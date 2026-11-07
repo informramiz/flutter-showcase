@@ -13,6 +13,12 @@ sealed class Result<T> {
     }
   }
 
+  /// Transforms a success; a failure passes through untouched.
+  Result<R> map<R>(R Function(T value) transform) => switch (this) {
+    Success<T>(:final value) => Success(transform(value)),
+    Err<T>(:final failure) => Err(failure),
+  };
+
   /// Returns the value or throws the failure.
   ///
   /// Used at the boundary with Riverpod, where `AsyncValue` carries the error.

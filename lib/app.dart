@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_showcase/core/strings.dart';
-import 'package:flutter_showcase/core/theme/app_theme.dart';
-import 'package:flutter_showcase/core/theme/theme_mode_provider.dart';
 import 'package:flutter_showcase/router.dart';
+import 'package:flutter_showcase/ui/core/strings.dart';
+import 'package:flutter_showcase/ui/core/theme/app_theme.dart';
+import 'package:flutter_showcase/ui/core/theme/theme_mode_controller.dart';
 
 class App extends ConsumerWidget {
   const App({super.key});

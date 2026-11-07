@@ -1,9 +1,9 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_showcase/core/failure_message.dart';
 import 'package:flutter_showcase/core/network/failure_interceptor.dart';
 import 'package:flutter_showcase/core/result/failure.dart';
 import 'package:flutter_showcase/core/result/result.dart';
-import 'package:flutter_showcase/core/strings.dart';
+import 'package:flutter_showcase/ui/core/failure_message.dart';
+import 'package:flutter_showcase/ui/core/strings.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 DioException _dioError(DioExceptionType type, {int? status}) => DioException(
@@ -31,6 +31,12 @@ void main() {
         result.getOrThrow,
         throwsA(isA<NetworkFailure>()),
       );
+    });
+
+    test('map transforms a success and passes a failure through', () {
+      expect(const Success(2).map((v) => v * 3).getOrThrow(), 6);
+      const failed = Err<int>(NetworkFailure());
+      expect(failed.map((v) => v * 3), isA<Err<int>>());
     });
 
     test('guard does not swallow programmer errors', () {
