@@ -24,12 +24,12 @@ class PlannerViewModel extends _$PlannerViewModel {
         .watch(plannerRepositoryProvider)
         .watchPlan()
         .listen(
-          (plan) => state = PlannerUiState(plan: AsyncData(plan)),
+          (plan) => state = state.copyWith(plan: AsyncData(plan)),
           onError: (Object error, StackTrace stack) =>
-              state = PlannerUiState(plan: AsyncError(error, stack)),
+              state = state.copyWith(plan: AsyncError(error, stack)),
         );
     ref.onDispose(() => unawaited(subscription.cancel()));
-    return const PlannerUiState();
+    return PlannerUiState(remindersSupported: _reminders.isSupported);
   }
 
   /// Whether [entry] is the last one in its day and slot.
@@ -75,9 +75,6 @@ class PlannerViewModel extends _$PlannerViewModel {
     await _repository.remove(entry.entryId);
     if (entry.reminderEnabled) await _reminders.cancel(entry.entryId);
   }
-
-  /// Whether cook reminders can be offered on this platform.
-  bool get remindersSupported => _reminders.isSupported;
 
   /// Turns [entry]'s weekly cook reminder on or off. Returns `false` when
   /// the user refused notification permission, and nothing changed.

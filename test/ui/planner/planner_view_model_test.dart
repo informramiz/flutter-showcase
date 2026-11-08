@@ -112,7 +112,10 @@ void main() {
       final (container, fake) = await setUpVm([first]);
       final vm = container.read(plannerViewModelProvider.notifier);
 
-      expect(vm.remindersSupported, isTrue);
+      expect(
+        container.read(plannerViewModelProvider).remindersSupported,
+        isTrue,
+      );
       expect(await vm.setReminder(first, enabled: true, text: text), isTrue);
 
       expect(reminders.calls, [

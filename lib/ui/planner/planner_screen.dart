@@ -81,6 +81,9 @@ class _EntryTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final viewModel = ref.read(plannerViewModelProvider.notifier);
+    final remindersSupported = ref.watch(
+      plannerViewModelProvider.select((s) => s.remindersSupported),
+    );
     return ListTile(
       key: ValueKey('plan-entry-${entry.entryId}'),
       leading: ClipRRect(
@@ -123,7 +126,7 @@ class _EntryTile extends ConsumerWidget {
               child: Text(l10n.moveDown),
             ),
           PopupMenuItem(value: _EntryAction.moveTo, child: Text(l10n.moveTo)),
-          if (viewModel.remindersSupported)
+          if (remindersSupported)
             CheckedPopupMenuItem(
               value: _EntryAction.reminder,
               checked: entry.reminderEnabled,

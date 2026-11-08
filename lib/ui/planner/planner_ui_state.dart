@@ -10,5 +10,8 @@ abstract class PlannerUiState with _$PlannerUiState {
   const factory PlannerUiState({
     @Default(AsyncLoading<List<PlannedMeal>>())
     AsyncValue<List<PlannedMeal>> plan,
+
+    /// Whether cook reminders can be offered on this platform.
+    @Default(false) bool remindersSupported,
   }) = _PlannerUiState;
 }
