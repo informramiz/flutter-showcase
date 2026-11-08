@@ -2,8 +2,13 @@
 // their data-layer implementations. The UI imports this file and only ever
 // sees the interface types (`MealRepository`, `FavouritesRepository`).
 // Tests swap any of these with `overrideWithValue`.
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_showcase/core/network/failure_interceptor.dart';
+import 'package:flutter_showcase/core/time/clock.dart';
+import 'package:flutter_showcase/data/database/app_database.dart';
+import 'package:flutter_showcase/data/database/meal_cache_dao.dart';
 import 'package:flutter_showcase/data/repositories/favourites_repository_impl.dart';
 import 'package:flutter_showcase/data/repositories/meal_repository_impl.dart';
 import 'package:flutter_showcase/data/services/connectivity_service.dart';
@@ -37,6 +42,21 @@ Dio dio(Ref ref) {
   return client;
 }
 
+@Riverpod(keepAlive: true)
+Clock clock(Ref ref) => DateTime.now;
+
+/// The one database connection for the app's lifetime.
+@Riverpod(keepAlive: true)
+AppDatabase appDatabase(Ref ref) {
+  final database = AppDatabase();
+  ref.onDispose(() => unawaited(database.close()));
+  return database;
+}
+
+@Riverpod(keepAlive: true)
+MealCacheDao mealCacheDao(Ref ref) =>
+    ref.watch(appDatabaseProvider).mealCacheDao;
+
 // Services -------------------------------------------------------------
 
 @Riverpod(keepAlive: true)
@@ -53,15 +73,20 @@ ConnectivityService connectivityService(Ref ref) => ConnectivityService();
 // Repositories (typed as their domain interface) -----------------------
 
 @Riverpod(keepAlive: true)
-MealRepository mealRepository(Ref ref) =>
-    MealRepositoryImpl(ref.watch(mealApiServiceProvider));
+MealRepository mealRepository(Ref ref) => MealRepositoryImpl(
+  ref.watch(mealApiServiceProvider),
+  ref.watch(mealCacheDaoProvider),
+  ref.watch(clockProvider),
+);
 
 @Riverpod(keepAlive: true)
 FavouritesRepository favouritesRepository(Ref ref) {
   final repository = FavouritesRepositoryImpl(
+    ref.watch(mealCacheDaoProvider),
     ref.watch(preferencesServiceProvider),
+    ref.watch(clockProvider),
   );
-  ref.onDispose(repository.dispose);
+  unawaited(repository.importLegacy());
   return repository;
 }
 

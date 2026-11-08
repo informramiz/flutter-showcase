@@ -12,26 +12,30 @@ class FavouritesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final favourites = ref.watch(favouritesViewModelProvider).meals;
+    final meals = ref.watch(favouritesViewModelProvider).meals;
     final viewModel = ref.read(favouritesViewModelProvider.notifier);
     return Scaffold(
       appBar: AppBar(title: Text(context.l10n.favouritesTab)),
-      body: favourites.isEmpty
-          ? EmptyView(
-              title: context.l10n.emptyFavourites,
-              hint: context.l10n.emptyFavouritesHint,
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.all(12),
-              itemCount: favourites.length,
-              itemBuilder: (context, i) => MealCard(
-                meal: favourites[i],
-                isFavourite: true,
-                onToggleFavourite: () =>
-                    viewModel.toggleFavourite(favourites[i]),
-                onTap: () => context.push(Routes.meal(favourites[i].id)),
+      body: meals.when(
+        loading: () => const LoadingView(),
+        error: (error, _) => ErrorView(error: error),
+        data: (favourites) => favourites.isEmpty
+            ? EmptyView(
+                title: context.l10n.emptyFavourites,
+                hint: context.l10n.emptyFavouritesHint,
+              )
+            : ListView.builder(
+                padding: const EdgeInsets.all(12),
+                itemCount: favourites.length,
+                itemBuilder: (context, i) => MealCard(
+                  meal: favourites[i],
+                  isFavourite: true,
+                  onToggleFavourite: () =>
+                      viewModel.toggleFavourite(favourites[i]),
+                  onTap: () => context.push(Routes.meal(favourites[i].id)),
+                ),
               ),
-            ),
+      ),
     );
   }
 }

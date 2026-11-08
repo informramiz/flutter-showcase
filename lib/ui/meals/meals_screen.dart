@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_showcase/router.dart';
 import 'package:flutter_showcase/ui/core/l10n.dart';
 import 'package:flutter_showcase/ui/core/theme/theme_mode_controller.dart';
+import 'package:flutter_showcase/ui/core/widgets/freshness_bar.dart';
 import 'package:flutter_showcase/ui/core/widgets/meal_card.dart';
 import 'package:flutter_showcase/ui/core/widgets/state_views.dart';
 import 'package:flutter_showcase/ui/meals/meals_view_model.dart';
@@ -36,6 +37,7 @@ class MealsScreen extends ConsumerWidget {
             selected: state.selectedCategory,
             onSelected: viewModel.selectCategory,
           ),
+          if (state.meals.hasValue) FreshnessBar(freshness: state.freshness),
           Expanded(
             child: state.meals.when(
               loading: () => const LoadingView(),
@@ -48,15 +50,18 @@ class MealsScreen extends ConsumerWidget {
                       title: context.l10n.emptyMeals,
                       hint: context.l10n.emptyMealsHint,
                     )
-                  : ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
-                      itemCount: list.length,
-                      itemBuilder: (context, i) => MealCard(
-                        meal: list[i],
-                        isFavourite: state.favouriteIds.contains(list[i].id),
-                        onToggleFavourite: () =>
-                            viewModel.toggleFavourite(list[i]),
-                        onTap: () => context.push(Routes.meal(list[i].id)),
+                  : RefreshIndicator(
+                      onRefresh: viewModel.refresh,
+                      child: ListView.builder(
+                        padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+                        itemCount: list.length,
+                        itemBuilder: (context, i) => MealCard(
+                          meal: list[i],
+                          isFavourite: state.favouriteIds.contains(list[i].id),
+                          onToggleFavourite: () =>
+                              viewModel.toggleFavourite(list[i]),
+                          onTap: () => context.push(Routes.meal(list[i].id)),
+                        ),
                       ),
                     ),
             ),

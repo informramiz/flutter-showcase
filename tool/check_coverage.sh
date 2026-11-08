@@ -1,10 +1,15 @@
 #!/usr/bin/env bash
-# Fails if line coverage (generated *.g.dart / *.freezed.dart excluded) is
-# below the threshold. Usage: tool/check_coverage.sh [min-percent]
+# Fails if line coverage is below the threshold. Excluded: build_runner and
+# gen-l10n output, and drift table definitions (a DSL read by the code
+# generator, never executed). Usage: tool/check_coverage.sh [min-percent]
 set -euo pipefail
 min="${1:-80}"
 awk -v min="$min" '
-  /^SF:/ { skip = ($0 ~ /\.(g|freezed)\.dart$/) }
+  /^SF:/ {
+    skip = ($0 ~ /\.(g|freezed)\.dart$/ ||
+            $0 ~ /lib\/l10n\/app_localizations/ ||
+            $0 ~ /lib\/data\/database\/tables\.dart$/)
+  }
   /^LF:/ && !skip { total += substr($0, 4) }
   /^LH:/ && !skip { hit += substr($0, 4) }
   END {

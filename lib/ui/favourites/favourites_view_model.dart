@@ -7,18 +7,22 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'favourites_view_model.g.dart';
 
-/// View model of the Favourites screen. The repository is the source of
-/// truth; this mirrors it into [FavouritesUiState].
+/// View model of the Favourites screen. The database is the source of
+/// truth; this mirrors its stream into [FavouritesUiState].
 @Riverpod(keepAlive: true)
 class FavouritesViewModel extends _$FavouritesViewModel {
   @override
   FavouritesUiState build() {
-    final favourites = ref.watch(favouritesRepositoryProvider);
-    final subscription = favourites.changes.listen(
-      (items) => state = FavouritesUiState(meals: items),
-    );
+    final subscription = ref
+        .watch(favouritesRepositoryProvider)
+        .watchFavourites()
+        .listen(
+          (items) => state = FavouritesUiState(meals: AsyncData(items)),
+          onError: (Object error, StackTrace stack) =>
+              state = FavouritesUiState(meals: AsyncError(error, stack)),
+        );
     ref.onDispose(() => unawaited(subscription.cancel()));
-    return FavouritesUiState(meals: favourites.favourites);
+    return const FavouritesUiState();
   }
 
   /// Command: the heart on a meal card.

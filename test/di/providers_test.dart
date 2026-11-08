@@ -8,6 +8,8 @@ import 'package:flutter_showcase/domain/repositories/meal_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../helpers/database.dart';
+
 void main() {
   test('dioProvider points at TheMealDB and installs the interceptor', () {
     final container = ProviderContainer();
@@ -31,6 +33,14 @@ void main() {
     );
   });
 
+  test('the clock reads the wall time', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    final before = DateTime.now();
+    expect(container.read(clockProvider)().isBefore(before), isFalse);
+  });
+
   test('repositories are wired and typed as their domain interfaces', () async {
     SharedPreferences.setMockInitialValues({});
     final container = ProviderContainer(
@@ -38,6 +48,7 @@ void main() {
         sharedPreferencesProvider.overrideWithValue(
           await SharedPreferences.getInstance(),
         ),
+        appDatabaseProvider.overrideWithValue(memoryDatabase()),
       ],
     );
     addTearDown(container.dispose);

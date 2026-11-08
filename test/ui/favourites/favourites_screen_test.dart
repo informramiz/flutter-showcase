@@ -1,5 +1,3 @@
-import 'package:flutter_showcase/data/repositories/favourites_repository_impl.dart';
-import 'package:flutter_showcase/data/services/preferences_service.dart';
 import 'package:flutter_showcase/ui/favourites/favourites_screen.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -18,16 +16,11 @@ void main() {
   testWidgets('lists saved favourites and removing one updates the list', (
     tester,
   ) async {
-    final seed = await fakePrefs();
-    final saver = FavouritesRepositoryImpl(PreferencesService(seed));
-    await saver.toggle(curry);
-    await saver.toggle(pasta);
-    await saver.dispose();
     await pumpScreen(
       tester,
       const FavouritesScreen(),
       stubbedRepository(),
-      prefs: {favouritesKey: seed.getString(favouritesKey)!},
+      favourites: [pasta, curry],
     );
 
     expect(find.text('Spaghetti Bolognese'), findsOneWidget);
@@ -41,16 +34,8 @@ void main() {
   });
 
   testWidgets('tapping a favourite opens its detail', (tester) async {
-    final seed = await fakePrefs();
-    final saver = FavouritesRepositoryImpl(PreferencesService(seed));
-    await saver.toggle(pasta);
-    await saver.dispose();
     final repository = stubbedRepository();
-    await pumpApp(
-      tester,
-      repository,
-      prefs: {favouritesKey: seed.getString(favouritesKey)!},
-    );
+    await pumpApp(tester, repository, favourites: [pasta]);
     await tester.pumpAndSettle();
     await tester.tap(find.text(l10n.favouritesTab).last);
     await tester.pumpAndSettle();

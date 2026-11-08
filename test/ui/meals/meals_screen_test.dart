@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_showcase/core/result/failure.dart';
 import 'package:flutter_showcase/core/result/result.dart';
+import 'package:flutter_showcase/domain/models/cached.dart';
 import 'package:flutter_showcase/domain/models/meal.dart';
 import 'package:flutter_showcase/ui/meals/meals_view_model.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -13,14 +14,17 @@ import '../../helpers/harness.dart';
 
 void main() {
   testWidgets('shows a spinner while loading, then the meals', (tester) async {
-    final completer = Completer<Result<List<Meal>>>();
+    final controller = StreamController<Result<Cached<List<Meal>>>>();
+    addTearDown(controller.close);
     final repository = stubbedRepository();
-    when(() => repository.search('')).thenAnswer((_) => completer.future);
+    when(
+      () => repository.search('', forceRefresh: anyForce),
+    ).thenAnswer((_) => controller.stream);
 
     await pumpApp(tester, repository);
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
 
-    completer.complete(const Success([pasta, curry]));
+    controller.add(Success(Cached(const [pasta, curry], fetchedAt: testNow)));
     await tester.pumpAndSettle();
 
     expect(find.text('Spaghetti Bolognese'), findsOneWidget);
@@ -34,9 +38,11 @@ void main() {
   ) async {
     final repository = stubbedRepository();
     var calls = 0;
-    when(() => repository.search('')).thenAnswer((_) async {
+    when(() => repository.search('', forceRefresh: anyForce)).thenAnswer((_) {
       calls++;
-      return calls == 1 ? const Err(NetworkFailure()) : const Success([pasta]);
+      return calls == 1
+          ? failed<List<Meal>>(const NetworkFailure())
+          : fresh(const [pasta]);
     });
 
     await pumpApp(tester, repository);
@@ -68,7 +74,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
     await tester.enterText(find.byType(TextField), 'pasta');
     await tester.pump(const Duration(milliseconds: 100));
-    verifyNever(() => repository.search(any()));
+    verifyNever(() => repository.search(any(), forceRefresh: anyForce));
 
     await tester.pump(searchDebounce);
     await tester.pumpAndSettle();
@@ -103,8 +109,8 @@ void main() {
   ) async {
     final repository = stubbedRepository();
     when(
-      repository.categories,
-    ).thenAnswer((_) async => const Err(ServerFailure(500)));
+      () => repository.categories(forceRefresh: anyForce),
+    ).thenAnswer((_) => failed(const ServerFailure(500)));
     await pumpApp(tester, repository);
     await tester.pumpAndSettle();
 
@@ -138,5 +144,82 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(app().themeMode, ThemeMode.dark);
+  });
+
+  testWidgets('a failed refresh says how old the shown list is', (
+    tester,
+  ) async {
+    final repository = stubbedRepository();
+    when(() => repository.search('', forceRefresh: anyForce)).thenAnswer(
+      (_) => Stream.value(
+        Success(
+          Cached(
+            const [pasta],
+            fetchedAt: testNow.subtract(const Duration(hours: 2)),
+            refreshFailure: const NetworkFailure(),
+          ),
+        ),
+      ),
+    );
+    await pumpApp(tester, repository);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('${l10n.refreshFailed} · ${l10n.savedHoursAgo(2)}'),
+      findsOneWidget,
+    );
+    expect(find.text('Spaghetti Bolognese'), findsOneWidget);
+  });
+
+  testWidgets('offline results from the device are labelled', (tester) async {
+    final repository = stubbedRepository();
+    when(() => repository.search('', forceRefresh: anyForce)).thenAnswer(
+      (_) => Stream.value(
+        const Success(Cached([pasta], refreshFailure: NetworkFailure())),
+      ),
+    );
+    await pumpApp(tester, repository);
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.savedOnDevice), findsOneWidget);
+  });
+
+  testWidgets('a stale list shows a progress line while revalidating', (
+    tester,
+  ) async {
+    final controller = StreamController<Result<Cached<List<Meal>>>>();
+    addTearDown(controller.close);
+    final repository = stubbedRepository();
+    when(
+      () => repository.search('', forceRefresh: anyForce),
+    ).thenAnswer((_) => controller.stream);
+    await pumpApp(tester, repository);
+
+    controller.add(
+      Success(Cached(const [pasta], fetchedAt: testNow, isRefreshing: true)),
+    );
+    await tester.pump();
+    expect(find.byType(LinearProgressIndicator), findsOneWidget);
+
+    controller.add(Success(Cached(const [pasta, curry], fetchedAt: testNow)));
+    await tester.pump();
+    expect(find.byType(LinearProgressIndicator), findsNothing);
+    expect(find.text('Chicken Curry'), findsOneWidget);
+  });
+
+  testWidgets('pull to refresh skips the cache', (tester) async {
+    final repository = stubbedRepository();
+    await pumpApp(tester, repository);
+    await tester.pumpAndSettle();
+
+    await tester.fling(
+      find.text('Spaghetti Bolognese'),
+      const Offset(0, 400),
+      1000,
+    );
+    await tester.pumpAndSettle();
+
+    verify(() => repository.search('', forceRefresh: true)).called(1);
+    verify(() => repository.categories(forceRefresh: true)).called(1);
   });
 }

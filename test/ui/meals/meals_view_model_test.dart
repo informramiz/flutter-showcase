@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_showcase/core/result/failure.dart';
-import 'package:flutter_showcase/core/result/result.dart';
-import 'package:flutter_showcase/di/providers.dart';
+import 'package:flutter_showcase/domain/models/meal.dart';
 import 'package:flutter_showcase/ui/meals/meals_ui_state.dart';
 import 'package:flutter_showcase/ui/meals/meals_view_model.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -18,8 +17,8 @@ void main() {
     repository = stubbedRepository();
   });
 
-  Future<MealsViewModel> start({Map<String, Object> prefs = const {}}) async {
-    container = (await makeContainer(repository, prefs: prefs))
+  Future<MealsViewModel> start({List<Meal> favourites = const []}) async {
+    container = (await makeContainer(repository, favourites: favourites))
       ..listen(mealsViewModelProvider, (_, _) {});
     return container.read(mealsViewModelProvider.notifier);
   }
@@ -86,16 +85,20 @@ void main() {
     await settle(searchDebounce);
 
     expect(state().meals.value, [curry]);
-    verifyNever(() => repository.byCategory(any()));
+    verifyNever(
+      () => repository.byCategory(any(), forceRefresh: anyForce),
+    );
   });
 
   test('a failure becomes an error state and retry recovers', () async {
     var calls = 0;
-    when(() => repository.search(any())).thenAnswer((_) async {
+    when(() => repository.search(any(), forceRefresh: anyForce)).thenAnswer((
+      _,
+    ) {
       calls++;
       return calls == 1
-          ? const Err(ServerFailure(500))
-          : const Success([pasta]);
+          ? failed<List<Meal>>(const ServerFailure(500))
+          : fresh(const [pasta]);
     });
     final viewModel = await start();
     await settle();
@@ -109,8 +112,8 @@ void main() {
 
   test('categories that fail to load leave the list usable', () async {
     when(
-      repository.categories,
-    ).thenAnswer((_) async => const Err(NetworkFailure()));
+      () => repository.categories(forceRefresh: anyForce),
+    ).thenAnswer((_) => failed(const NetworkFailure()));
     await start();
     await settle();
 
@@ -130,17 +133,35 @@ void main() {
     expect(state().favouriteIds, isEmpty);
   });
 
-  test('restores favourite ids saved by a previous run', () async {
-    await start(
-      prefs: {
-        'favourites_v1':
-            '[{"id":"2","name":"Chicken Curry","thumbnailUrl":"u"}]',
-      },
-    );
+  test('restores favourite ids saved earlier', () async {
+    await start(favourites: [curry]);
+    await settle();
     expect(state().favouriteIds, {'2'});
-    expect(
-      container.read(favouritesRepositoryProvider).favourites,
-      hasLength(1),
-    );
+  });
+
+  test('a failed category refresh keeps the chips already shown', () async {
+    final viewModel = await start();
+    await settle();
+    when(
+      () => repository.categories(forceRefresh: true),
+    ).thenAnswer((_) => failed(const NetworkFailure()));
+
+    await viewModel.refresh();
+
+    expect(state().categories.value, ['Pasta', 'Chicken']);
+  });
+
+  test('a list failure after cached data clears freshness', () async {
+    final viewModel = await start();
+    await settle();
+    expect(state().freshness.fetchedAt, testNow);
+    when(
+      () => repository.search('', forceRefresh: true),
+    ).thenAnswer((_) => failed(const NetworkFailure()));
+
+    await viewModel.refresh();
+
+    expect(state().meals.error, isA<NetworkFailure>());
+    expect(state().freshness.fetchedAt, isNull);
   });
 }

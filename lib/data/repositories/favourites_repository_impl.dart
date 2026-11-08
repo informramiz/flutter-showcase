@@ -1,68 +1,54 @@
-import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter_showcase/core/time/clock.dart';
+import 'package:flutter_showcase/data/database/meal_cache_dao.dart';
 import 'package:flutter_showcase/data/services/preferences_service.dart';
 import 'package:flutter_showcase/domain/models/meal.dart';
 import 'package:flutter_showcase/domain/repositories/favourites_repository.dart';
 
-const favouritesKey = 'favourites_v1';
+/// Where favourites lived before the database: one JSON list in
+/// shared_preferences. Read once by [FavouritesRepositoryImpl.importLegacy].
+const legacyFavouritesKey = 'favourites_v1';
 
-/// Persists favourite meals as one JSON list through [PreferencesService].
-///
-/// Only the summary fields are stored, which is enough to render the
-/// Favourites tab offline. Detail is fetched when a meal is opened.
 class FavouritesRepositoryImpl implements FavouritesRepository {
-  FavouritesRepositoryImpl(this._prefs) : _items = _load(_prefs);
+  FavouritesRepositoryImpl(this._cache, this._prefs, this._clock);
 
+  final MealCacheDao _cache;
   final PreferencesService _prefs;
-  final _controller = StreamController<List<Meal>>.broadcast(sync: true);
-  List<Meal> _items;
+  final Clock _clock;
 
   @override
-  List<Meal> get favourites => _items;
+  Stream<List<Meal>> watchFavourites() => _cache.watchFavourites();
 
   @override
-  Stream<List<Meal>> get changes => _controller.stream;
+  Future<void> toggle(Meal meal) => _cache.toggleFavourite(meal, _clock());
 
-  @override
-  Future<void> toggle(Meal meal) {
-    final exists = _items.any((m) => m.id == meal.id);
-    _items = exists
-        ? [
-            for (final m in _items)
-              if (m.id != meal.id) m,
-          ]
-        : [meal, ..._items];
-    _controller.add(_items);
-    return _prefs.setString(
-      favouritesKey,
-      jsonEncode([for (final m in _items) _toJson(m)]),
-    );
-  }
-
-  /// Closes [changes]. Called by the DI container on disposal.
-  Future<void> dispose() => _controller.close();
-
-  static List<Meal> _load(PreferencesService prefs) {
-    final raw = prefs.getString(favouritesKey);
-    if (raw == null) return const [];
+  /// Moves favourites saved by earlier versions into the database, keeping
+  /// their order, then deletes the old key. Corrupt data is dropped rather
+  /// than crashing start-up.
+  Future<void> importLegacy() async {
+    final raw = _prefs.getString(legacyFavouritesKey);
+    if (raw == null) return;
+    final List<Meal> meals;
     try {
-      return [
+      meals = [
         for (final item in jsonDecode(raw) as List<dynamic>)
           _fromJson(item as Map<String, dynamic>),
       ];
     } on Object {
-      // Corrupt data must never crash the app; start empty instead.
-      return const [];
+      await _prefs.remove(legacyFavouritesKey);
+      return;
     }
+    // The list was stored newest first; older items get earlier timestamps.
+    final now = _clock();
+    for (final (i, meal) in meals.indexed) {
+      await _cache.addFavourite(
+        meal,
+        now.subtract(Duration(milliseconds: i)),
+      );
+    }
+    await _prefs.remove(legacyFavouritesKey);
   }
-
-  static Map<String, dynamic> _toJson(Meal m) => {
-    'id': m.id,
-    'name': m.name,
-    'thumbnailUrl': m.thumbnailUrl,
-    'category': m.category,
-  };
 
   static Meal _fromJson(Map<String, dynamic> json) => Meal(
     id: json['id'] as String,

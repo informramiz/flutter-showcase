@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_showcase/domain/models/meal.dart';
 import 'package:flutter_showcase/ui/core/l10n.dart';
+import 'package:flutter_showcase/ui/core/widgets/freshness_bar.dart';
 import 'package:flutter_showcase/ui/core/widgets/meal_thumbnail.dart';
 import 'package:flutter_showcase/ui/core/widgets/state_views.dart';
 import 'package:flutter_showcase/ui/meal_detail/meal_detail_view_model.dart';
@@ -35,7 +36,17 @@ class MealDetailScreen extends ConsumerWidget {
       body: meal.when(
         loading: () => const LoadingView(),
         error: (error, _) => ErrorView(error: error, onRetry: viewModel.retry),
-        data: (m) => _MealBody(meal: m),
+        data: (m) => Column(
+          children: [
+            FreshnessBar(freshness: state.freshness),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: viewModel.refresh,
+                child: _MealBody(meal: m),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_showcase/core/result/failure.dart';
-import 'package:flutter_showcase/core/result/result.dart';
+import 'package:flutter_showcase/domain/models/meal.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -54,11 +54,11 @@ void main() {
   ) async {
     final repository = stubbedRepository();
     var calls = 0;
-    when(() => repository.meal(any())).thenAnswer((_) async {
+    when(() => repository.meal(any(), forceRefresh: anyForce)).thenAnswer((_) {
       calls++;
       return calls == 1
-          ? const Err(ServerFailure(503))
-          : const Success(pastaDetail);
+          ? failed<Meal>(const ServerFailure(503))
+          : fresh(pastaDetail);
     });
     await pumpApp(tester, repository);
     await tester.pumpAndSettle();
@@ -74,9 +74,9 @@ void main() {
 
   testWidgets('an unknown meal shows the not-found message', (tester) async {
     final repository = stubbedRepository();
-    when(() => repository.meal(any())).thenAnswer(
-      (_) async => const Err(NotFoundFailure()),
-    );
+    when(
+      () => repository.meal(any(), forceRefresh: anyForce),
+    ).thenAnswer((_) => failed(const NotFoundFailure()));
     await pumpApp(tester, repository);
     await tester.pumpAndSettle();
     await openFirstMeal(tester);
@@ -89,9 +89,9 @@ void main() {
     tester,
   ) async {
     final repository = stubbedRepository();
-    when(() => repository.meal(any())).thenAnswer(
-      (_) async => const Success(pasta),
-    );
+    when(
+      () => repository.meal(any(), forceRefresh: anyForce),
+    ).thenAnswer((_) => fresh(pasta));
     await pumpApp(tester, repository);
     await tester.pumpAndSettle();
     await openFirstMeal(tester);
@@ -99,5 +99,26 @@ void main() {
     expect(find.text(l10n.ingredients), findsNothing);
     expect(find.text(l10n.instructions), findsNothing);
     expect(find.byType(Chip), findsNWidgets(2));
+  });
+
+  testWidgets('pull to refresh revalidates the recipe', (tester) async {
+    final repository = stubbedRepository();
+    await pumpApp(tester, repository);
+    await tester.pumpAndSettle();
+    await openFirstMeal(tester);
+
+    await tester.fling(
+      find
+          .descendant(
+            of: find.byType(RefreshIndicator),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+      const Offset(0, 400),
+      1000,
+    );
+    await tester.pumpAndSettle();
+
+    verify(() => repository.meal('1', forceRefresh: true)).called(1);
   });
 }

@@ -1,57 +1,66 @@
-import 'dart:convert';
-
+import 'package:flutter_showcase/data/database/meal_cache_dao.dart';
 import 'package:flutter_showcase/data/repositories/favourites_repository_impl.dart';
 import 'package:flutter_showcase/data/services/preferences_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../helpers/database.dart';
 import '../../helpers/fixtures.dart';
 import '../../helpers/harness.dart';
 
-Future<PreferencesService> _service([
-  Map<String, Object> values = const {},
-]) async => PreferencesService(await fakePrefs(values));
-
 void main() {
-  test('starts empty and survives corrupt data', () async {
-    expect(FavouritesRepositoryImpl(await _service()).favourites, isEmpty);
-    final corrupt = await _service({favouritesKey: 'not json'});
-    expect(FavouritesRepositoryImpl(corrupt).favourites, isEmpty);
+  late MealCacheDao dao;
+
+  setUp(() => dao = memoryDatabase().mealCacheDao);
+
+  Future<(FavouritesRepositoryImpl, PreferencesService)> make([
+    Map<String, Object> prefs = const {},
+  ]) async {
+    final service = PreferencesService(await fakePrefs(prefs));
+    return (FavouritesRepositoryImpl(dao, service, () => testNow), service);
+  }
+
+  Future<List<String>> ids(FavouritesRepositoryImpl repo) async => [
+    for (final m in await repo.watchFavourites().first) m.id,
+  ];
+
+  test('toggle adds newest first, then removes', () async {
+    final (repo, _) = await make();
+    var tick = 0;
+    final timed = FavouritesRepositoryImpl(
+      dao,
+      PreferencesService(await fakePrefs()),
+      () => testNow.add(Duration(seconds: tick++)),
+    );
+
+    await timed.toggle(pasta);
+    await timed.toggle(curry);
+    expect(await ids(repo), ['2', '1']);
+
+    await timed.toggle(pasta);
+    expect(await ids(repo), ['2']);
   });
 
-  test('toggle adds newest first, removes, and emits every change', () async {
-    final repo = FavouritesRepositoryImpl(await _service());
-    addTearDown(repo.dispose);
-    final emitted = <List<String>>[];
-    repo.changes.listen((items) => emitted.add([for (final m in items) m.id]));
-
-    await repo.toggle(pasta);
-    await repo.toggle(curry);
-    await repo.toggle(pasta);
-
-    expect(emitted, [
-      ['1'],
-      ['2', '1'],
-      ['2'],
-    ]);
-    expect(repo.favourites.map((m) => m.id), ['2']);
-  });
-
-  test('persists only the summary fields and restores them', () async {
-    final prefs = await _service();
-    final repo = FavouritesRepositoryImpl(prefs);
-    addTearDown(repo.dispose);
-    await repo.toggle(pasta);
-
-    final stored = jsonDecode(prefs.getString(favouritesKey)!) as List;
-    expect(stored.single, {
-      'id': '1',
-      'name': pasta.name,
-      'thumbnailUrl': pasta.thumbnailUrl,
-      'category': 'Pasta',
+  test('imports favourites saved by the old version, once', () async {
+    final (repo, prefs) = await make({
+      legacyFavouritesKey:
+          '[{"id":"2","name":"Chicken Curry","thumbnailUrl":"u"}, '
+          '{"id":"1","name":"Pasta","thumbnailUrl":"u","category":"Pasta"}]',
     });
 
-    final restored = FavouritesRepositoryImpl(prefs);
-    addTearDown(restored.dispose);
-    expect(restored.favourites.single.name, pasta.name);
+    await repo.importLegacy();
+
+    expect(await ids(repo), ['2', '1']);
+    expect(prefs.getString(legacyFavouritesKey), isNull);
+    await repo.importLegacy();
+    expect(await ids(repo), ['2', '1']);
+  });
+
+  test('corrupt legacy data is dropped without crashing', () async {
+    final (repo, prefs) = await make({legacyFavouritesKey: 'not json'});
+
+    await repo.importLegacy();
+
+    expect(await ids(repo), isEmpty);
+    expect(prefs.getString(legacyFavouritesKey), isNull);
   });
 }

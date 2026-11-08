@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_showcase/core/result/failure.dart';
 import 'package:flutter_showcase/core/result/result.dart';
+import 'package:flutter_showcase/domain/models/cached.dart';
+import 'package:flutter_showcase/domain/models/meal.dart';
 import 'package:flutter_showcase/ui/meal_detail/meal_detail_ui_state.dart';
 import 'package:flutter_showcase/ui/meal_detail/meal_detail_view_model.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -18,9 +20,9 @@ void main() {
   });
 
   Future<MealDetailViewModel> start({
-    Map<String, Object> prefs = const {},
+    List<Meal> favourites = const [],
   }) async {
-    container = await makeContainer(repository, prefs: prefs);
+    container = await makeContainer(repository, favourites: favourites);
     final provider = mealDetailViewModelProvider('1');
     container.listen(provider, (_, _) {});
     return container.read(provider.notifier);
@@ -44,11 +46,11 @@ void main() {
 
   test('a failure becomes an error state and retry recovers', () async {
     var calls = 0;
-    when(() => repository.meal(any())).thenAnswer((_) async {
+    when(() => repository.meal(any(), forceRefresh: anyForce)).thenAnswer((_) {
       calls++;
       return calls == 1
-          ? const Err(NotFoundFailure())
-          : const Success(pastaDetail);
+          ? failed<Meal>(const NotFoundFailure())
+          : fresh(pastaDetail);
     });
     final viewModel = await start();
     await settle();
@@ -75,11 +77,31 @@ void main() {
   });
 
   test('starts as favourite when saved by a previous run', () async {
-    await start(
-      prefs: {
-        'favourites_v1': '[{"id":"1","name":"Pasta","thumbnailUrl":"u"}]',
-      },
-    );
+    await start(favourites: [pasta]);
+    await settle();
     expect(state().isFavourite, isTrue);
+  });
+
+  test('refresh skips the cache and records freshness', () async {
+    final viewModel = await start();
+    await settle();
+    final at = testNow.subtract(const Duration(hours: 3));
+    when(() => repository.meal('1', forceRefresh: true)).thenAnswer(
+      (_) => Stream.value(
+        Success(
+          Cached(
+            pastaDetail,
+            fetchedAt: at,
+            refreshFailure: const NetworkFailure(),
+          ),
+        ),
+      ),
+    );
+
+    await viewModel.refresh();
+
+    expect(state().freshness.fetchedAt, at);
+    expect(state().freshness.refreshFailure, isA<NetworkFailure>());
+    expect(state().meal.value, pastaDetail);
   });
 }

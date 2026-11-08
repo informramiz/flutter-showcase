@@ -12,32 +12,42 @@ class LoadingView extends StatelessWidget {
 }
 
 class ErrorView extends StatelessWidget {
-  const ErrorView({required this.error, required this.onRetry, super.key});
+  const ErrorView({required this.error, this.onRetry, super.key});
 
   final Object error;
-  final VoidCallback onRetry;
+
+  /// Shows a retry button when set.
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) => _Message(
     icon: Icons.error_outline,
     title: describeError(error, context.l10n),
-    action: FilledButton.icon(
-      onPressed: onRetry,
-      icon: const Icon(Icons.refresh),
-      label: Text(context.l10n.retry),
-    ),
+    action: onRetry == null
+        ? null
+        : FilledButton.icon(
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh),
+            label: Text(context.l10n.retry),
+          ),
   );
 }
 
 class EmptyView extends StatelessWidget {
-  const EmptyView({required this.title, required this.hint, super.key});
+  const EmptyView({
+    required this.title,
+    required this.hint,
+    this.icon = Icons.search_off,
+    super.key,
+  });
 
   final String title;
   final String hint;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) =>
-      _Message(icon: Icons.search_off, title: title, subtitle: hint);
+      _Message(icon: icon, title: title, subtitle: hint);
 }
 
 class _Message extends StatelessWidget {
