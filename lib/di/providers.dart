@@ -8,14 +8,17 @@ import 'package:dio/dio.dart';
 import 'package:flutter_showcase/core/network/failure_interceptor.dart';
 import 'package:flutter_showcase/core/time/clock.dart';
 import 'package:flutter_showcase/data/database/app_database.dart';
+import 'package:flutter_showcase/data/database/collections_dao.dart';
 import 'package:flutter_showcase/data/database/meal_cache_dao.dart';
 import 'package:flutter_showcase/data/database/planner_dao.dart';
+import 'package:flutter_showcase/data/repositories/collections_repository_impl.dart';
 import 'package:flutter_showcase/data/repositories/favourites_repository_impl.dart';
 import 'package:flutter_showcase/data/repositories/meal_repository_impl.dart';
 import 'package:flutter_showcase/data/repositories/planner_repository_impl.dart';
 import 'package:flutter_showcase/data/services/connectivity_service.dart';
 import 'package:flutter_showcase/data/services/meal_api_service.dart';
 import 'package:flutter_showcase/data/services/preferences_service.dart';
+import 'package:flutter_showcase/domain/repositories/collections_repository.dart';
 import 'package:flutter_showcase/domain/repositories/favourites_repository.dart';
 import 'package:flutter_showcase/domain/repositories/meal_repository.dart';
 import 'package:flutter_showcase/domain/repositories/planner_repository.dart';
@@ -63,6 +66,10 @@ MealCacheDao mealCacheDao(Ref ref) =>
 @Riverpod(keepAlive: true)
 PlannerDao plannerDao(Ref ref) => ref.watch(appDatabaseProvider).plannerDao;
 
+@Riverpod(keepAlive: true)
+CollectionsDao collectionsDao(Ref ref) =>
+    ref.watch(appDatabaseProvider).collectionsDao;
+
 // Services -------------------------------------------------------------
 
 @Riverpod(keepAlive: true)
@@ -99,6 +106,13 @@ FavouritesRepository favouritesRepository(Ref ref) {
 @Riverpod(keepAlive: true)
 PlannerRepository plannerRepository(Ref ref) =>
     PlannerRepositoryImpl(ref.watch(plannerDaoProvider));
+
+@Riverpod(keepAlive: true)
+CollectionsRepository collectionsRepository(Ref ref) =>
+    CollectionsRepositoryImpl(
+      ref.watch(collectionsDaoProvider),
+      ref.watch(clockProvider),
+    );
 
 /// Emits `true` while the device has some network interface.
 @riverpod

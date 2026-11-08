@@ -79,5 +79,6 @@
   "mealCount": "{count, plural, =0{Sin recetas} =1{1 receta} other{{count} recetas}}",
   "nameEmpty": "Escribe un nombre",
   "nameTooLong": "Usa como máximo {max} caracteres",
-  "nameDuplicate": "Ya tienes una colección con este nombre"
+  "nameDuplicate": "Ya tienes una colección con este nombre",
+  "removeFromCollection": "Quitar de la colección"
 }

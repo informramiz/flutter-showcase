@@ -153,5 +153,6 @@
       }
     }
   },
-  "nameDuplicate": "You already have a collection with this name"
+  "nameDuplicate": "You already have a collection with this name",
+  "removeFromCollection": "Remove from collection"
 }

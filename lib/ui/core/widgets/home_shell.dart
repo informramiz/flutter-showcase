@@ -38,6 +38,10 @@ class HomeShell extends ConsumerWidget {
             icon: const Icon(Icons.calendar_month),
             label: context.l10n.plannerTab,
           ),
+          NavigationDestination(
+            icon: const Icon(Icons.folder),
+            label: context.l10n.collectionsTab,
+          ),
         ],
       ),
     );

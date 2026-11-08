@@ -42,7 +42,7 @@ class MealCacheDao extends DatabaseAccessor<AppDatabase>
           ..orderBy([OrderingTerm.asc(queryResults.position)]);
     final rows = await query.get();
     return (
-      data: [for (final r in rows) _summary(r.readTable(cachedMeals))],
+      data: [for (final r in rows) summaryOf(r.readTable(cachedMeals))],
       fetchedAt: fetchedAt,
     );
   }
@@ -148,7 +148,7 @@ class MealCacheDao extends DatabaseAccessor<AppDatabase>
               ..orderBy([(m) => OrderingTerm.asc(m.name)])
               ..limit(localSearchLimit))
             .get();
-    return rows.map(_summary).toList();
+    return rows.map(summaryOf).toList();
   }
 
   Future<List<Meal>> mealsInCategory(String category) async {
@@ -157,7 +157,7 @@ class MealCacheDao extends DatabaseAccessor<AppDatabase>
               ..where((m) => m.category.equals(category))
               ..orderBy([(m) => OrderingTerm.asc(m.name)]))
             .get();
-    return rows.map(_summary).toList();
+    return rows.map(summaryOf).toList();
   }
 
   // Favourites ---------------------------------------------------------
@@ -168,7 +168,7 @@ class MealCacheDao extends DatabaseAccessor<AppDatabase>
       innerJoin(cachedMeals, cachedMeals.id.equalsExp(favourites.mealId)),
     ])..orderBy([OrderingTerm.desc(favourites.addedAt)]);
     return query.watch().map(
-      (rows) => [for (final r in rows) _summary(r.readTable(cachedMeals))],
+      (rows) => [for (final r in rows) summaryOf(r.readTable(cachedMeals))],
     );
   }
 
@@ -235,7 +235,7 @@ class MealCacheDao extends DatabaseAccessor<AppDatabase>
               ..where((i) => i.mealId.equals(row.id))
               ..orderBy([(i) => OrderingTerm.asc(i.position)]))
             .get();
-    return _summary(row).copyWith(
+    return summaryOf(row).copyWith(
       area: row.area,
       instructions: row.instructions,
       tags: row.tags.isEmpty ? const [] : row.tags.split(','),
@@ -246,7 +246,8 @@ class MealCacheDao extends DatabaseAccessor<AppDatabase>
     );
   }
 
-  static Meal _summary(CachedMealRow row) => Meal(
+  /// The list-level [Meal] stored in a cached row.
+  static Meal summaryOf(CachedMealRow row) => Meal(
     id: row.id,
     name: row.name,
     thumbnailUrl: row.thumbnailUrl,

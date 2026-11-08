@@ -95,3 +95,23 @@ class ShoppingChecks extends Table {
   @override
   Set<Column<Object>> get primaryKey => {itemKey};
 }
+
+/// A user-named group of meals. Added in schema v2.
+@DataClassName('CollectionRow')
+class Collections extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text().unique()();
+  DateTimeColumn get createdAt => dateTime()();
+}
+
+/// Which meals are in which collection (many-to-many). Added in schema v2.
+@DataClassName('CollectionMealRow')
+class CollectionMeals extends Table {
+  IntColumn get collectionId =>
+      integer().references(Collections, #id, onDelete: KeyAction.cascade)();
+  TextColumn get mealId => text().references(CachedMeals, #id)();
+  DateTimeColumn get addedAt => dateTime()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {collectionId, mealId};
+}

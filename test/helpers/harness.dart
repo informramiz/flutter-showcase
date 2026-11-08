@@ -9,7 +9,9 @@ import 'package:flutter_showcase/core/result/result.dart';
 import 'package:flutter_showcase/di/providers.dart';
 import 'package:flutter_showcase/domain/models/cached.dart';
 import 'package:flutter_showcase/domain/models/meal.dart';
+import 'package:flutter_showcase/domain/models/meal_collection.dart';
 import 'package:flutter_showcase/domain/models/plan.dart';
+import 'package:flutter_showcase/domain/repositories/collections_repository.dart';
 import 'package:flutter_showcase/domain/repositories/favourites_repository.dart';
 import 'package:flutter_showcase/domain/repositories/meal_repository.dart';
 import 'package:flutter_showcase/domain/repositories/planner_repository.dart';
@@ -143,6 +145,83 @@ class FakePlannerRepository implements PlannerRepository {
   }
 }
 
+/// In-memory collections with the same contract as the database version.
+class FakeCollectionsRepository implements CollectionsRepository {
+  FakeCollectionsRepository([
+    Map<MealCollection, List<Meal>> initial = const {},
+  ]) {
+    for (final MapEntry(key: c, value: meals) in initial.entries) {
+      _names[c.id] = c.name;
+      _meals[c.id] = [...meals];
+    }
+  }
+
+  final _names = <int, String>{};
+  final _meals = <int, List<Meal>>{};
+  final _changes = StreamController<void>.broadcast(sync: true);
+
+  List<MealCollection> get _collections =>
+      [
+        for (final MapEntry(key: id, value: name) in _names.entries)
+          MealCollection(id: id, name: name, mealCount: _meals[id]!.length),
+      ]..sort(
+        (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+      );
+
+  Stream<T> _watch<T>(T Function() read) async* {
+    yield read();
+    yield* _changes.stream.map((_) => read());
+  }
+
+  @override
+  Stream<List<MealCollection>> watchCollections() => _watch(() => _collections);
+
+  @override
+  Stream<List<Meal>> watchMeals(int collectionId) =>
+      _watch(() => [...?_meals[collectionId]]);
+
+  @override
+  Stream<Set<int>> watchCollectionIdsFor(String mealId) => _watch(
+    () => {
+      for (final MapEntry(key: id, value: meals) in _meals.entries)
+        if (meals.any((m) => m.id == mealId)) id,
+    },
+  );
+
+  @override
+  Future<int> create(String name) async {
+    final id = (_names.keys.fold(0, (a, b) => a > b ? a : b)) + 1;
+    _names[id] = name.trim();
+    _meals[id] = [];
+    _changes.add(null);
+    return id;
+  }
+
+  @override
+  Future<void> rename(int collectionId, String name) async {
+    _names[collectionId] = name.trim();
+    _changes.add(null);
+  }
+
+  @override
+  Future<void> delete(int collectionId) async {
+    _names.remove(collectionId);
+    _meals.remove(collectionId);
+    _changes.add(null);
+  }
+
+  @override
+  Future<void> setMembership(
+    int collectionId,
+    Meal meal, {
+    required bool included,
+  }) async {
+    final meals = _meals[collectionId]!..removeWhere((m) => m.id == meal.id);
+    if (included) meals.insert(0, meal);
+    _changes.add(null);
+  }
+}
+
 /// Never auto-retry in tests, so failures surface immediately.
 Duration? noRetry(int retryCount, Object error) => null;
 
@@ -158,6 +237,7 @@ Future<List<Override>> baseOverrides(
   Map<String, Object> prefs = const {},
   FavouritesRepository? favouritesRepository,
   PlannerRepository? plannerRepository,
+  CollectionsRepository? collectionsRepository,
 }) async => [
   sharedPreferencesProvider.overrideWithValue(await fakePrefs(prefs)),
   clockProvider.overrideWithValue(() => testNow),
@@ -168,6 +248,9 @@ Future<List<Override>> baseOverrides(
   plannerRepositoryProvider.overrideWithValue(
     plannerRepository ?? FakePlannerRepository(),
   ),
+  collectionsRepositoryProvider.overrideWithValue(
+    collectionsRepository ?? FakeCollectionsRepository(),
+  ),
   isOnlineProvider.overrideWith((ref) => Stream.value(online)),
 ];
 
@@ -177,6 +260,7 @@ Future<ProviderContainer> makeContainer(
   Map<String, Object> prefs = const {},
   FavouritesRepository? favouritesRepository,
   PlannerRepository? plannerRepository,
+  CollectionsRepository? collectionsRepository,
   List<Override> overrides = const [],
 }) async {
   final container = ProviderContainer(
@@ -188,6 +272,7 @@ Future<ProviderContainer> makeContainer(
         prefs: prefs,
         favouritesRepository: favouritesRepository,
         plannerRepository: plannerRepository,
+        collectionsRepository: collectionsRepository,
       ),
       ...overrides,
     ],
@@ -203,6 +288,7 @@ Future<void> pumpApp(
   List<Meal> favourites = const [],
   bool online = true,
   PlannerRepository? plannerRepository,
+  CollectionsRepository? collectionsRepository,
   List<Override> overrides = const [],
 }) async {
   await tester.pumpWidget(
@@ -214,6 +300,7 @@ Future<void> pumpApp(
           favourites: favourites,
           online: online,
           plannerRepository: plannerRepository,
+          collectionsRepository: collectionsRepository,
         ),
         ...overrides,
       ],
@@ -230,6 +317,7 @@ Future<void> pumpScreen(
   MealRepository repository, {
   List<Meal> favourites = const [],
   PlannerRepository? plannerRepository,
+  CollectionsRepository? collectionsRepository,
   List<Override> overrides = const [],
 }) async {
   await tester.pumpWidget(
@@ -240,6 +328,7 @@ Future<void> pumpScreen(
           repository,
           favourites: favourites,
           plannerRepository: plannerRepository,
+          collectionsRepository: collectionsRepository,
         ),
         ...overrides,
       ],

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_showcase/domain/models/meal.dart';
+import 'package:flutter_showcase/ui/collections/save_to_collection_sheet.dart';
 import 'package:flutter_showcase/ui/core/l10n.dart';
 import 'package:flutter_showcase/ui/core/plan_labels.dart';
 import 'package:flutter_showcase/ui/core/widgets/freshness_bar.dart';
@@ -25,6 +26,13 @@ class MealDetailScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(meal.value?.name ?? ''),
         actions: [
+          if (meal.value case final loaded?)
+            IconButton(
+              tooltip: context.l10n.saveToCollection,
+              icon: const Icon(Icons.bookmark_add_outlined),
+              onPressed: () =>
+                  unawaited(showSaveToCollectionSheet(context, loaded)),
+            ),
           if (meal.hasValue)
             IconButton(
               tooltip: context.l10n.addToPlan,

@@ -36,13 +36,13 @@ class ErrorView extends StatelessWidget {
 class EmptyView extends StatelessWidget {
   const EmptyView({
     required this.title,
-    required this.hint,
+    this.hint,
     this.icon = Icons.search_off,
     super.key,
   });
 
   final String title;
-  final String hint;
+  final String? hint;
   final IconData icon;
 
   @override

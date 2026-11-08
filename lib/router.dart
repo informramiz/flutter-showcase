@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_showcase/ui/collections/collection_detail_screen.dart';
+import 'package:flutter_showcase/ui/collections/collections_screen.dart';
 import 'package:flutter_showcase/ui/core/widgets/home_shell.dart';
 import 'package:flutter_showcase/ui/favourites/favourites_screen.dart';
 import 'package:flutter_showcase/ui/meal_detail/meal_detail_screen.dart';
@@ -15,6 +17,8 @@ abstract final class Routes {
   static const favourites = '/favourites';
   static const planner = '/planner';
   static const shopping = '/planner/shopping';
+  static const collections = '/collections';
+  static String collection(int id) => '/collections/$id';
   static String meal(String id) => '/meal/$id';
 }
 
@@ -50,6 +54,22 @@ GoRouter router(Ref ref) {
                   GoRoute(
                     path: 'shopping',
                     builder: (context, state) => const ShoppingListScreen(),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: Routes.collections,
+                builder: (context, state) => const CollectionsScreen(),
+                routes: [
+                  GoRoute(
+                    path: ':id',
+                    builder: (context, state) => CollectionDetailScreen(
+                      id: int.tryParse(state.pathParameters['id']!) ?? -1,
+                    ),
                   ),
                 ],
               ),
