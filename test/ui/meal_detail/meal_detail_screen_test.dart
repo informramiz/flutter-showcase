@@ -121,4 +121,34 @@ void main() {
 
     verify(() => repository.meal('1', forceRefresh: true)).called(1);
   });
+  testWidgets('add to plan saves the chosen day and slot', (tester) async {
+    final planner = FakePlannerRepository();
+    await pumpApp(tester, stubbedRepository(), plannerRepository: planner);
+    await tester.pumpAndSettle();
+    await openFirstMeal(tester);
+
+    await tester.tap(find.byTooltip(l10n.addToPlan));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.wednesday));
+    await tester.tap(find.text(l10n.lunch));
+    await tester.tap(find.text(l10n.add));
+    await tester.pumpAndSettle();
+
+    expect(planner.calls, ['add 1 wednesday lunch']);
+    expect(find.text(l10n.addedToPlan(l10n.wednesday, l10n.lunch)), findsOne);
+  });
+
+  testWidgets('dismissing the plan sheet adds nothing', (tester) async {
+    final planner = FakePlannerRepository();
+    await pumpApp(tester, stubbedRepository(), plannerRepository: planner);
+    await tester.pumpAndSettle();
+    await openFirstMeal(tester);
+
+    await tester.tap(find.byTooltip(l10n.addToPlan));
+    await tester.pumpAndSettle();
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+
+    expect(planner.calls, isEmpty);
+  });
 }

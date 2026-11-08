@@ -9,8 +9,10 @@ import 'package:flutter_showcase/core/result/result.dart';
 import 'package:flutter_showcase/di/providers.dart';
 import 'package:flutter_showcase/domain/models/cached.dart';
 import 'package:flutter_showcase/domain/models/meal.dart';
+import 'package:flutter_showcase/domain/models/plan.dart';
 import 'package:flutter_showcase/domain/repositories/favourites_repository.dart';
 import 'package:flutter_showcase/domain/repositories/meal_repository.dart';
+import 'package:flutter_showcase/domain/repositories/planner_repository.dart';
 import 'package:flutter_showcase/l10n/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -60,6 +62,87 @@ class FakeFavouritesRepository implements FavouritesRepository {
   }
 }
 
+/// In-memory plan. Writes update the emitted plan and are logged in
+/// [calls] so tests can assert on the exact command.
+class FakePlannerRepository implements PlannerRepository {
+  FakePlannerRepository([
+    List<PlannedMeal> plan = const [],
+    Set<String> checked = const {},
+  ]) : _plan = [...plan],
+       _checked = {...checked};
+
+  List<PlannedMeal> _plan;
+  Set<String> _checked;
+  final calls = <String>[];
+  final _planChanges = StreamController<List<PlannedMeal>>.broadcast(
+    sync: true,
+  );
+  final _checkChanges = StreamController<Set<String>>.broadcast(sync: true);
+
+  @override
+  Stream<List<PlannedMeal>> watchPlan() async* {
+    yield _plan;
+    yield* _planChanges.stream;
+  }
+
+  @override
+  Stream<Set<String>> watchCheckedKeys() async* {
+    yield _checked;
+    yield* _checkChanges.stream;
+  }
+
+  @override
+  Future<int> add(Meal meal, PlanDay day, MealSlot slot) async {
+    calls.add('add ${meal.id} ${day.name} ${slot.name}');
+    final id = _plan.length + 1;
+    final position = _plan.where((e) => e.day == day && e.slot == slot);
+    _plan = [
+      ..._plan,
+      PlannedMeal(
+        entryId: id,
+        day: day,
+        slot: slot,
+        position: position.length,
+        meal: meal,
+      ),
+    ];
+    _planChanges.add(_plan);
+    return id;
+  }
+
+  @override
+  Future<void> move(int entryId, PlanDay day, MealSlot slot, int index) async {
+    calls.add('move $entryId ${day.name} ${slot.name} $index');
+  }
+
+  @override
+  Future<void> remove(int entryId) async {
+    calls.add('remove $entryId');
+    _plan = [
+      for (final e in _plan)
+        if (e.entryId != entryId) e,
+    ];
+    _planChanges.add(_plan);
+  }
+
+  @override
+  Future<void> setReminder(int entryId, {required bool enabled}) async {
+    calls.add('reminder $entryId $enabled');
+  }
+
+  @override
+  Future<void> setChecked(String key, {required bool checked}) async {
+    _checked = checked ? {..._checked, key} : ({..._checked}..remove(key));
+    _checkChanges.add(_checked);
+  }
+
+  @override
+  Future<void> uncheckAll() async {
+    _checked = {};
+    _checkChanges.add(_checked);
+  }
+}
+
 /// Never auto-retry in tests, so failures surface immediately.
 Duration? noRetry(int retryCount, Object error) => null;
 
@@ -74,12 +157,16 @@ Future<List<Override>> baseOverrides(
   bool online = true,
   Map<String, Object> prefs = const {},
   FavouritesRepository? favouritesRepository,
+  PlannerRepository? plannerRepository,
 }) async => [
   sharedPreferencesProvider.overrideWithValue(await fakePrefs(prefs)),
   clockProvider.overrideWithValue(() => testNow),
   mealRepositoryProvider.overrideWithValue(repository),
   favouritesRepositoryProvider.overrideWithValue(
     favouritesRepository ?? FakeFavouritesRepository(favourites),
+  ),
+  plannerRepositoryProvider.overrideWithValue(
+    plannerRepository ?? FakePlannerRepository(),
   ),
   isOnlineProvider.overrideWith((ref) => Stream.value(online)),
 ];
@@ -89,6 +176,7 @@ Future<ProviderContainer> makeContainer(
   List<Meal> favourites = const [],
   Map<String, Object> prefs = const {},
   FavouritesRepository? favouritesRepository,
+  PlannerRepository? plannerRepository,
   List<Override> overrides = const [],
 }) async {
   final container = ProviderContainer(
@@ -99,6 +187,7 @@ Future<ProviderContainer> makeContainer(
         favourites: favourites,
         prefs: prefs,
         favouritesRepository: favouritesRepository,
+        plannerRepository: plannerRepository,
       ),
       ...overrides,
     ],
@@ -113,6 +202,7 @@ Future<void> pumpApp(
   MealRepository repository, {
   List<Meal> favourites = const [],
   bool online = true,
+  PlannerRepository? plannerRepository,
   List<Override> overrides = const [],
 }) async {
   await tester.pumpWidget(
@@ -123,6 +213,7 @@ Future<void> pumpApp(
           repository,
           favourites: favourites,
           online: online,
+          plannerRepository: plannerRepository,
         ),
         ...overrides,
       ],
@@ -138,13 +229,18 @@ Future<void> pumpScreen(
   Widget child,
   MealRepository repository, {
   List<Meal> favourites = const [],
+  PlannerRepository? plannerRepository,
   List<Override> overrides = const [],
 }) async {
   await tester.pumpWidget(
     ProviderScope(
       retry: noRetry,
       overrides: [
-        ...await baseOverrides(repository, favourites: favourites),
+        ...await baseOverrides(
+          repository,
+          favourites: favourites,
+          plannerRepository: plannerRepository,
+        ),
         ...overrides,
       ],
       child: MaterialApp(

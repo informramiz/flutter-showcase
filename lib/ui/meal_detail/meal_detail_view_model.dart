@@ -4,6 +4,7 @@ import 'package:flutter_showcase/core/result/result.dart';
 import 'package:flutter_showcase/di/providers.dart';
 import 'package:flutter_showcase/domain/models/cached.dart';
 import 'package:flutter_showcase/domain/models/meal.dart';
+import 'package:flutter_showcase/domain/models/plan.dart';
 import 'package:flutter_showcase/ui/core/freshness.dart';
 import 'package:flutter_showcase/ui/core/latest_subscription.dart';
 import 'package:flutter_showcase/ui/meal_detail/meal_detail_ui_state.dart';
@@ -48,6 +49,14 @@ class MealDetailViewModel extends _$MealDetailViewModel {
     final meal = state.meal.value;
     if (meal == null) return;
     await ref.read(favouritesRepositoryProvider).toggle(meal);
+  }
+
+  /// Command: "Add to plan". Returns false until the meal has loaded.
+  Future<bool> addToPlan(PlanDay day, MealSlot slot) async {
+    final meal = state.meal.value;
+    if (meal == null) return false;
+    await ref.read(plannerRepositoryProvider).add(meal, day, slot);
+    return true;
   }
 
   Future<void> _load({bool forceRefresh = false}) {

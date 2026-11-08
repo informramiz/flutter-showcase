@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:flutter_showcase/data/database/meal_cache_dao.dart';
+import 'package:flutter_showcase/data/database/planner_dao.dart';
 import 'package:flutter_showcase/data/database/tables.dart';
 import 'package:flutter_showcase/domain/models/plan.dart';
 import 'package:path_provider/path_provider.dart';
@@ -21,7 +22,7 @@ part 'app_database.g.dart';
     PlanEntries,
     ShoppingChecks,
   ],
-  daos: [MealCacheDao],
+  daos: [MealCacheDao, PlannerDao],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _open());

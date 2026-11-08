@@ -1,11 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_showcase/domain/models/meal.dart';
 import 'package:flutter_showcase/ui/core/l10n.dart';
+import 'package:flutter_showcase/ui/core/plan_labels.dart';
 import 'package:flutter_showcase/ui/core/widgets/freshness_bar.dart';
 import 'package:flutter_showcase/ui/core/widgets/meal_thumbnail.dart';
 import 'package:flutter_showcase/ui/core/widgets/state_views.dart';
 import 'package:flutter_showcase/ui/meal_detail/meal_detail_view_model.dart';
+import 'package:flutter_showcase/ui/planner/plan_slot_sheet.dart';
 
 class MealDetailScreen extends ConsumerWidget {
   const MealDetailScreen({required this.id, super.key});
@@ -21,6 +25,12 @@ class MealDetailScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(meal.value?.name ?? ''),
         actions: [
+          if (meal.hasValue)
+            IconButton(
+              tooltip: context.l10n.addToPlan,
+              icon: const Icon(Icons.calendar_month),
+              onPressed: () => unawaited(_addToPlan(context, viewModel)),
+            ),
           if (meal.hasValue)
             IconButton(
               tooltip: state.isFavourite
@@ -50,6 +60,24 @@ class MealDetailScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+Future<void> _addToPlan(
+  BuildContext context,
+  MealDetailViewModel viewModel,
+) async {
+  final l10n = context.l10n;
+  final messenger = ScaffoldMessenger.of(context);
+  final target = await showPlanSlotSheet(context, title: l10n.addToPlan);
+  if (target == null) return;
+  if (!await viewModel.addToPlan(target.day, target.slot)) return;
+  messenger.showSnackBar(
+    SnackBar(
+      content: Text(
+        l10n.addedToPlan(l10n.dayName(target.day), l10n.slotName(target.slot)),
+      ),
+    ),
+  );
 }
 
 class _MealBody extends StatelessWidget {

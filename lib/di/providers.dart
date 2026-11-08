@@ -9,13 +9,16 @@ import 'package:flutter_showcase/core/network/failure_interceptor.dart';
 import 'package:flutter_showcase/core/time/clock.dart';
 import 'package:flutter_showcase/data/database/app_database.dart';
 import 'package:flutter_showcase/data/database/meal_cache_dao.dart';
+import 'package:flutter_showcase/data/database/planner_dao.dart';
 import 'package:flutter_showcase/data/repositories/favourites_repository_impl.dart';
 import 'package:flutter_showcase/data/repositories/meal_repository_impl.dart';
+import 'package:flutter_showcase/data/repositories/planner_repository_impl.dart';
 import 'package:flutter_showcase/data/services/connectivity_service.dart';
 import 'package:flutter_showcase/data/services/meal_api_service.dart';
 import 'package:flutter_showcase/data/services/preferences_service.dart';
 import 'package:flutter_showcase/domain/repositories/favourites_repository.dart';
 import 'package:flutter_showcase/domain/repositories/meal_repository.dart';
+import 'package:flutter_showcase/domain/repositories/planner_repository.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -57,6 +60,9 @@ AppDatabase appDatabase(Ref ref) {
 MealCacheDao mealCacheDao(Ref ref) =>
     ref.watch(appDatabaseProvider).mealCacheDao;
 
+@Riverpod(keepAlive: true)
+PlannerDao plannerDao(Ref ref) => ref.watch(appDatabaseProvider).plannerDao;
+
 // Services -------------------------------------------------------------
 
 @Riverpod(keepAlive: true)
@@ -89,6 +95,10 @@ FavouritesRepository favouritesRepository(Ref ref) {
   unawaited(repository.importLegacy());
   return repository;
 }
+
+@Riverpod(keepAlive: true)
+PlannerRepository plannerRepository(Ref ref) =>
+    PlannerRepositoryImpl(ref.watch(plannerDaoProvider));
 
 /// Emits `true` while the device has some network interface.
 @riverpod
