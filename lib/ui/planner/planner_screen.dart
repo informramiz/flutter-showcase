@@ -101,7 +101,9 @@ class _EntryTile extends ConsumerWidget {
           ],
         ],
       ),
-      onTap: () => context.push(Routes.meal(entry.meal.id)),
+      onTap: () => context.push(
+        Routes.mealFrom(Routes.planner, entry.meal.id),
+      ),
       trailing: PopupMenuButton<_EntryAction>(
         onSelected: (action) => unawaited(
           switch (action) {

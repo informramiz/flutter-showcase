@@ -16,6 +16,10 @@ part 'router.g.dart';
 
 /// App paths. The same paths open from deep links such as
 /// `mealfinder://open/meal/52772` and from tapped cook reminders.
+///
+/// Meal detail is nested in every tab's branch, so it keeps the bottom bar
+/// and shares that tab's navigator with the list. A Hero only flies between
+/// routes of the same navigator.
 abstract final class Routes {
   static const meals = '/';
   static const favourites = '/favourites';
@@ -24,7 +28,17 @@ abstract final class Routes {
   static const collections = '/collections';
   static String collection(int id) => '/collections/$id';
   static String meal(String id) => '/meal/$id';
+
+  /// Meal detail inside the tab whose current path is [from].
+  static String mealFrom(String from, String id) =>
+      from == meals ? meal(id) : '$from/meal/$id';
 }
+
+GoRoute _mealDetail() => GoRoute(
+  path: 'meal/:mealId',
+  builder: (context, state) =>
+      MealDetailScreen(id: state.pathParameters['mealId']!),
+);
 
 @Riverpod(keepAlive: true)
 GoRouter router(Ref ref) {
@@ -38,6 +52,7 @@ GoRouter router(Ref ref) {
               GoRoute(
                 path: Routes.meals,
                 builder: (context, state) => const MealsScreen(),
+                routes: [_mealDetail()],
               ),
             ],
           ),
@@ -46,6 +61,7 @@ GoRouter router(Ref ref) {
               GoRoute(
                 path: Routes.favourites,
                 builder: (context, state) => const FavouritesScreen(),
+                routes: [_mealDetail()],
               ),
             ],
           ),
@@ -59,6 +75,7 @@ GoRouter router(Ref ref) {
                     path: 'shopping',
                     builder: (context, state) => const ShoppingListScreen(),
                   ),
+                  _mealDetail(),
                 ],
               ),
             ],
@@ -74,17 +91,13 @@ GoRouter router(Ref ref) {
                     builder: (context, state) => CollectionDetailScreen(
                       id: int.tryParse(state.pathParameters['id']!) ?? -1,
                     ),
+                    routes: [_mealDetail()],
                   ),
                 ],
               ),
             ],
           ),
         ],
-      ),
-      GoRoute(
-        path: '/meal/:id',
-        builder: (context, state) =>
-            MealDetailScreen(id: state.pathParameters['id']!),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

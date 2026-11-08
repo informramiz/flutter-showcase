@@ -48,7 +48,11 @@ class CollectionDetailScreen extends ConsumerWidget {
                 itemCount: meals.length,
                 itemBuilder: (context, i) => ListTile(
                   key: ValueKey('collection-meal-${meals[i].id}'),
-                  leading: MealThumbnail(url: meals[i].thumbnailUrl, size: 48),
+                  leading: MealThumbnail(
+                    url: meals[i].thumbnailUrl,
+                    size: 48,
+                    heroTag: mealHeroTag(meals[i].id),
+                  ),
                   title: Text(meals[i].name),
                   subtitle: meals[i].category == null
                       ? null
@@ -58,7 +62,9 @@ class CollectionDetailScreen extends ConsumerWidget {
                     icon: const Icon(Icons.remove_circle_outline),
                     onPressed: () => viewModel.remove(meals[i]),
                   ),
-                  onTap: () => context.push(Routes.meal(meals[i].id)),
+                  onTap: () => context.push(
+                    Routes.mealFrom(Routes.collection(id), meals[i].id),
+                  ),
                 ),
               ),
       ),

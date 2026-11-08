@@ -328,6 +328,15 @@ Future<ProviderContainer> makeContainer(
 }
 
 /// Pumps the whole app (router, theme, shell) with fakes underneath.
+/// A 400x860 logical phone screen, so full-app tests see what a phone shows
+/// below the bottom navigation bar.
+void usePhoneView(WidgetTester tester) {
+  tester.view
+    ..physicalSize = const Size(1200, 2580)
+    ..devicePixelRatio = 3;
+  addTearDown(tester.view.reset);
+}
+
 Future<void> pumpApp(
   WidgetTester tester,
   MealRepository repository, {
@@ -338,6 +347,7 @@ Future<void> pumpApp(
   CookReminderService? cookReminderService,
   List<Override> overrides = const [],
 }) async {
+  usePhoneView(tester);
   await tester.pumpWidget(
     ProviderScope(
       retry: noRetry,

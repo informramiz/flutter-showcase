@@ -100,7 +100,10 @@ class _MealBody extends StatelessWidget {
       children: [
         AspectRatio(
           aspectRatio: 16 / 10,
-          child: MealThumbnail(url: meal.thumbnailUrl),
+          child: MealThumbnail(
+            url: meal.thumbnailUrl,
+            heroTag: mealHeroTag(meal.id),
+          ),
         ),
         Padding(
           padding: const EdgeInsets.all(16),

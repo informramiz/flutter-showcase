@@ -32,7 +32,9 @@ class FavouritesScreen extends ConsumerWidget {
                   isFavourite: true,
                   onToggleFavourite: () =>
                       viewModel.toggleFavourite(favourites[i]),
-                  onTap: () => context.push(Routes.meal(favourites[i].id)),
+                  onTap: () => context.push(
+                    Routes.mealFrom(Routes.favourites, favourites[i].id),
+                  ),
                 ),
               ),
       ),

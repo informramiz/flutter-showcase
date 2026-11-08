@@ -26,7 +26,11 @@ class MealCard extends StatelessWidget {
         onTap: onTap,
         child: Row(
           children: [
-            MealThumbnail(url: meal.thumbnailUrl, size: 88),
+            MealThumbnail(
+              url: meal.thumbnailUrl,
+              size: 88,
+              heroTag: mealHeroTag(meal.id),
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
