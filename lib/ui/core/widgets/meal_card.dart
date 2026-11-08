@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_showcase/domain/models/meal.dart';
-import 'package:flutter_showcase/ui/core/strings.dart';
+import 'package:flutter_showcase/ui/core/l10n.dart';
 import 'package:flutter_showcase/ui/core/widgets/meal_thumbnail.dart';
 
 /// A meal row. Stateless: favourite flag and callbacks come from the screen.
@@ -48,8 +48,8 @@ class MealCard extends StatelessWidget {
             ),
             IconButton(
               tooltip: favourite
-                  ? Strings.removeFavourite
-                  : Strings.addFavourite,
+                  ? context.l10n.removeFavourite
+                  : context.l10n.addFavourite,
               icon: Icon(favourite ? Icons.favorite : Icons.favorite_border),
               onPressed: onToggleFavourite,
             ),

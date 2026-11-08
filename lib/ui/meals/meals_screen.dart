@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_showcase/router.dart';
-import 'package:flutter_showcase/ui/core/strings.dart';
+import 'package:flutter_showcase/ui/core/l10n.dart';
 import 'package:flutter_showcase/ui/core/theme/theme_mode_controller.dart';
 import 'package:flutter_showcase/ui/core/widgets/meal_card.dart';
 import 'package:flutter_showcase/ui/core/widgets/state_views.dart';
@@ -17,10 +17,10 @@ class MealsScreen extends ConsumerWidget {
     final viewModel = ref.read(mealsViewModelProvider.notifier);
     return Scaffold(
       appBar: AppBar(
-        title: const Text(Strings.appTitle),
+        title: Text(context.l10n.appTitle),
         actions: [
           IconButton(
-            tooltip: Strings.toggleTheme,
+            tooltip: context.l10n.toggleTheme,
             icon: const Icon(Icons.brightness_6),
             onPressed: () => ref
                 .read(themeModeControllerProvider.notifier)
@@ -44,9 +44,9 @@ class MealsScreen extends ConsumerWidget {
                 onRetry: viewModel.retry,
               ),
               data: (list) => list.isEmpty
-                  ? const EmptyView(
-                      title: Strings.emptyMeals,
-                      hint: Strings.emptyMealsHint,
+                  ? EmptyView(
+                      title: context.l10n.emptyMeals,
+                      hint: context.l10n.emptyMealsHint,
                     )
                   : ListView.builder(
                       padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
@@ -78,10 +78,10 @@ class _SearchField extends StatelessWidget {
     child: TextField(
       onChanged: onChanged,
       textInputAction: TextInputAction.search,
-      decoration: const InputDecoration(
-        hintText: Strings.searchHint,
-        prefixIcon: Icon(Icons.search),
-        border: OutlineInputBorder(
+      decoration: InputDecoration(
+        hintText: context.l10n.searchHint,
+        prefixIcon: const Icon(Icons.search),
+        border: const OutlineInputBorder(
           borderRadius: BorderRadius.all(Radius.circular(28)),
         ),
         isDense: true,
@@ -116,7 +116,7 @@ class _CategoryChips extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(right: 8, top: 6, bottom: 6),
               child: ChoiceChip(
-                label: Text(c ?? Strings.allCategories),
+                label: Text(c ?? context.l10n.allCategories),
                 selected: selected == c,
                 onSelected: (_) => onSelected(c),
               ),

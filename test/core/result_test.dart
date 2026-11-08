@@ -1,9 +1,10 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_showcase/core/network/failure_interceptor.dart';
 import 'package:flutter_showcase/core/result/failure.dart';
 import 'package:flutter_showcase/core/result/result.dart';
 import 'package:flutter_showcase/ui/core/failure_message.dart';
-import 'package:flutter_showcase/ui/core/strings.dart';
+import 'package:flutter_showcase/ui/core/l10n.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 DioException _dioError(DioExceptionType type, {int? status}) => DioException(
@@ -13,6 +14,8 @@ DioException _dioError(DioExceptionType type, {int? status}) => DioException(
       ? null
       : Response(requestOptions: RequestOptions(), statusCode: status),
 );
+
+final AppLocalizations l10n = lookupAppLocalizations(const Locale('en'));
 
 void main() {
   group('Result', () {
@@ -102,16 +105,19 @@ void main() {
 
   group('describeError', () {
     test('gives a message per failure', () {
-      expect(describeError(const NetworkFailure()), Strings.errorNetwork);
-      expect(describeError(const ServerFailure(500)), Strings.errorServer(500));
+      expect(describeError(const NetworkFailure(), l10n), l10n.errorNetwork);
       expect(
-        describeError(const ServerFailure(null)),
-        Strings.errorServer(null),
+        describeError(const ServerFailure(500), l10n),
+        l10n.errorServerCode(500),
       );
-      expect(describeError(const ParseFailure()), Strings.errorParse);
-      expect(describeError(const NotFoundFailure()), Strings.notFound);
-      expect(describeError(const UnknownFailure()), Strings.errorUnknown);
-      expect(describeError(StateError('x')), Strings.errorUnknown);
+      expect(
+        describeError(const ServerFailure(null), l10n),
+        l10n.errorServer,
+      );
+      expect(describeError(const ParseFailure(), l10n), l10n.errorParse);
+      expect(describeError(const NotFoundFailure(), l10n), l10n.notFound);
+      expect(describeError(const UnknownFailure(), l10n), l10n.errorUnknown);
+      expect(describeError(StateError('x'), l10n), l10n.errorUnknown);
     });
   });
 }

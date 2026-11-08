@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_showcase/router.dart';
-import 'package:flutter_showcase/ui/core/strings.dart';
+import 'package:flutter_showcase/ui/core/l10n.dart';
 import 'package:flutter_showcase/ui/core/theme/app_theme.dart';
 import 'package:flutter_showcase/ui/core/theme/theme_mode_controller.dart';
 
@@ -11,7 +11,9 @@ class App extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp.router(
-      title: Strings.appTitle,
+      onGenerateTitle: (context) => context.l10n.appTitle,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: ref.watch(themeModeControllerProvider),

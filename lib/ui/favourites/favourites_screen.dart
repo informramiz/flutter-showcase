@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_showcase/router.dart';
-import 'package:flutter_showcase/ui/core/strings.dart';
+import 'package:flutter_showcase/ui/core/l10n.dart';
 import 'package:flutter_showcase/ui/core/widgets/meal_card.dart';
 import 'package:flutter_showcase/ui/core/widgets/state_views.dart';
 import 'package:flutter_showcase/ui/favourites/favourites_view_model.dart';
@@ -15,11 +15,11 @@ class FavouritesScreen extends ConsumerWidget {
     final favourites = ref.watch(favouritesViewModelProvider).meals;
     final viewModel = ref.read(favouritesViewModelProvider.notifier);
     return Scaffold(
-      appBar: AppBar(title: const Text(Strings.favouritesTab)),
+      appBar: AppBar(title: Text(context.l10n.favouritesTab)),
       body: favourites.isEmpty
-          ? const EmptyView(
-              title: Strings.emptyFavourites,
-              hint: Strings.emptyFavouritesHint,
+          ? EmptyView(
+              title: context.l10n.emptyFavourites,
+              hint: context.l10n.emptyFavouritesHint,
             )
           : ListView.builder(
               padding: const EdgeInsets.all(12),

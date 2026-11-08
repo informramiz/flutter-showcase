@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_showcase/ui/core/failure_message.dart';
-import 'package:flutter_showcase/ui/core/strings.dart';
+import 'package:flutter_showcase/ui/core/l10n.dart';
 
 class LoadingView extends StatelessWidget {
   const LoadingView({super.key});
 
   @override
-  Widget build(BuildContext context) => const Center(
-    child: CircularProgressIndicator(semanticsLabel: Strings.loading),
+  Widget build(BuildContext context) => Center(
+    child: CircularProgressIndicator(semanticsLabel: context.l10n.loading),
   );
 }
 
@@ -20,11 +20,11 @@ class ErrorView extends StatelessWidget {
   @override
   Widget build(BuildContext context) => _Message(
     icon: Icons.error_outline,
-    title: describeError(error),
+    title: describeError(error, context.l10n),
     action: FilledButton.icon(
       onPressed: onRetry,
       icon: const Icon(Icons.refresh),
-      label: const Text(Strings.retry),
+      label: Text(context.l10n.retry),
     ),
   );
 }

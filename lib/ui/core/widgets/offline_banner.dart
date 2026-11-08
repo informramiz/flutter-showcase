@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_showcase/ui/core/strings.dart';
+import 'package:flutter_showcase/ui/core/l10n.dart';
 
 class OfflineBanner extends StatelessWidget {
   const OfflineBanner({super.key});
@@ -19,7 +19,7 @@ class OfflineBanner extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  Strings.offlineBanner,
+                  context.l10n.offlineBanner,
                   style: TextStyle(color: scheme.onErrorContainer),
                 ),
               ),

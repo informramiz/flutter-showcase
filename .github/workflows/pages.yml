@@ -25,6 +25,7 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
+      - run: flutter gen-l10n
       - run: dart run build_runner build --delete-conflicting-outputs --force-jit
       - run: flutter build web --release --base-href /flutter-showcase/
       # GitHub Pages serves 404.html for unknown paths, so deep links fall back to the SPA.

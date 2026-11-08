@@ -49,3 +49,4 @@ app.*.map.json
 *.freezed.dart
 .astro/
 coverage/
+lib/l10n/app_localizations*.dart

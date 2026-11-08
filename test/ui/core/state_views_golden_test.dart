@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_showcase/core/result/failure.dart';
-import 'package:flutter_showcase/ui/core/strings.dart';
+import 'package:flutter_showcase/ui/core/l10n.dart';
 import 'package:flutter_showcase/ui/core/theme/app_theme.dart';
 import 'package:flutter_showcase/ui/core/widgets/state_views.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -8,8 +8,12 @@ import 'package:flutter_test/flutter_test.dart';
 Widget _frame(ThemeData theme, Widget child) => MaterialApp(
   theme: theme,
   debugShowCheckedModeBanner: false,
+  localizationsDelegates: AppLocalizations.localizationsDelegates,
+  supportedLocales: AppLocalizations.supportedLocales,
   home: Scaffold(body: child),
 );
+
+final AppLocalizations l10n = lookupAppLocalizations(const Locale('en'));
 
 void main() {
   const size = Size(360, 360);
@@ -39,12 +43,12 @@ void main() {
     await tester.pumpWidget(
       _frame(
         AppTheme.light,
-        const EmptyView(
-          title: Strings.emptyMeals,
-          hint: Strings.emptyMealsHint,
+        EmptyView(
+          title: l10n.emptyMeals,
+          hint: l10n.emptyMealsHint,
         ),
       ),
     );
-    expect(find.text(Strings.emptyMeals), findsOneWidget);
+    expect(find.text(l10n.emptyMeals), findsOneWidget);
   });
 }

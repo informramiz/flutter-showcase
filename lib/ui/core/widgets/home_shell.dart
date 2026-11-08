@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_showcase/di/providers.dart';
-import 'package:flutter_showcase/ui/core/strings.dart';
+import 'package:flutter_showcase/ui/core/l10n.dart';
 import 'package:flutter_showcase/ui/core/widgets/offline_banner.dart';
 import 'package:go_router/go_router.dart';
 
@@ -25,14 +25,14 @@ class HomeShell extends ConsumerWidget {
         selectedIndex: shell.currentIndex,
         onDestinationSelected: (i) =>
             shell.goBranch(i, initialLocation: i == shell.currentIndex),
-        destinations: const [
+        destinations: [
           NavigationDestination(
-            icon: Icon(Icons.restaurant_menu),
-            label: Strings.mealsTab,
+            icon: const Icon(Icons.restaurant_menu),
+            label: context.l10n.mealsTab,
           ),
           NavigationDestination(
-            icon: Icon(Icons.favorite),
-            label: Strings.favouritesTab,
+            icon: const Icon(Icons.favorite),
+            label: context.l10n.favouritesTab,
           ),
         ],
       ),

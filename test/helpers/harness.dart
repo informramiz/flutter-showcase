@@ -6,11 +6,15 @@ import 'package:flutter_showcase/core/result/result.dart';
 import 'package:flutter_showcase/di/providers.dart';
 import 'package:flutter_showcase/domain/models/meal.dart';
 import 'package:flutter_showcase/domain/repositories/meal_repository.dart';
+import 'package:flutter_showcase/l10n/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'fixtures.dart';
+
+/// English strings, for finding text in tests.
+final AppLocalizations l10n = lookupAppLocalizations(const Locale('en'));
 
 class MockMealRepository extends Mock implements MealRepository {}
 
@@ -72,7 +76,11 @@ Future<void> pumpScreen(
     ProviderScope(
       retry: noRetry,
       overrides: await baseOverrides(repository, prefs: prefs),
-      child: MaterialApp(home: child),
+      child: MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: child,
+      ),
     ),
   );
   await tester.pump();

@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_showcase/core/result/failure.dart';
 import 'package:flutter_showcase/core/result/result.dart';
 import 'package:flutter_showcase/domain/models/meal.dart';
-import 'package:flutter_showcase/ui/core/strings.dart';
 import 'package:flutter_showcase/ui/meals/meals_view_model.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -42,12 +41,12 @@ void main() {
 
     await pumpApp(tester, repository);
     await tester.pumpAndSettle();
-    expect(find.text(Strings.errorNetwork), findsOneWidget);
+    expect(find.text(l10n.errorNetwork), findsOneWidget);
 
-    await tester.tap(find.text(Strings.retry));
+    await tester.tap(find.text(l10n.retry));
     await tester.pumpAndSettle();
 
-    expect(find.text(Strings.errorNetwork), findsNothing);
+    expect(find.text(l10n.errorNetwork), findsNothing);
     expect(find.text('Spaghetti Bolognese'), findsOneWidget);
   });
 
@@ -55,8 +54,8 @@ void main() {
     await pumpApp(tester, stubbedRepository(meals: const []));
     await tester.pumpAndSettle();
 
-    expect(find.text(Strings.emptyMeals), findsOneWidget);
-    expect(find.text(Strings.emptyMealsHint), findsOneWidget);
+    expect(find.text(l10n.emptyMeals), findsOneWidget);
+    expect(find.text(l10n.emptyMealsHint), findsOneWidget);
   });
 
   testWidgets('typing searches once, after the debounce', (tester) async {
@@ -87,12 +86,12 @@ void main() {
 
     verify(() => repository.byCategory('Pasta')).called(1);
 
-    await tester.tap(find.widgetWithText(ChoiceChip, Strings.allCategories));
+    await tester.tap(find.widgetWithText(ChoiceChip, l10n.allCategories));
     await tester.pumpAndSettle();
     expect(
       tester
           .widget<ChoiceChip>(
-            find.widgetWithText(ChoiceChip, Strings.allCategories),
+            find.widgetWithText(ChoiceChip, l10n.allCategories),
           )
           .selected,
       isTrue,
@@ -119,14 +118,14 @@ void main() {
     await pumpApp(tester, stubbedRepository(), online: false);
     await tester.pumpAndSettle();
 
-    expect(find.text(Strings.offlineBanner), findsOneWidget);
+    expect(find.text(l10n.offlineBanner), findsOneWidget);
   });
 
   testWidgets('hides the offline banner when online', (tester) async {
     await pumpApp(tester, stubbedRepository());
     await tester.pumpAndSettle();
 
-    expect(find.text(Strings.offlineBanner), findsNothing);
+    expect(find.text(l10n.offlineBanner), findsNothing);
   });
 
   testWidgets('the theme button switches to dark mode', (tester) async {
@@ -135,7 +134,7 @@ void main() {
     MaterialApp app() => tester.widget<MaterialApp>(find.byType(MaterialApp));
     expect(app().themeMode, ThemeMode.system);
 
-    await tester.tap(find.byTooltip(Strings.toggleTheme));
+    await tester.tap(find.byTooltip(l10n.toggleTheme));
     await tester.pumpAndSettle();
 
     expect(app().themeMode, ThemeMode.dark);

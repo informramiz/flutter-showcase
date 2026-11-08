@@ -1,0 +1,157 @@
+{
+  "@@locale": "en",
+  "appTitle": "Meal Finder",
+  "mealsTab": "Meals",
+  "favouritesTab": "Favourites",
+  "plannerTab": "Planner",
+  "collectionsTab": "Collections",
+  "searchHint": "Search meals",
+  "allCategories": "All",
+  "retry": "Retry",
+  "loading": "Loading",
+  "refresh": "Refresh",
+  "offlineBanner": "You are offline. Showing what is saved.",
+  "emptyMeals": "No meals found",
+  "emptyMealsHint": "Try another search or category.",
+  "emptyFavourites": "No favourites yet",
+  "emptyFavouritesHint": "Tap the heart on a meal to save it here.",
+  "ingredients": "Ingredients",
+  "instructions": "Instructions",
+  "addFavourite": "Add to favourites",
+  "removeFavourite": "Remove from favourites",
+  "toggleTheme": "Toggle theme",
+  "notFound": "This meal does not exist",
+  "pageNotFound": "Page not found",
+  "errorNetwork": "No connection. Check your network and retry.",
+  "errorParse": "The server sent data we could not read.",
+  "errorUnknown": "Something went wrong.",
+  "errorServer": "The server had a problem.",
+  "errorServerCode": "The server had a problem ({code}).",
+  "@errorServerCode": {
+    "placeholders": {
+      "code": {
+        "type": "int"
+      }
+    }
+  },
+  "savedMinutesAgo": "{minutes, plural, =0{Saved just now} =1{Saved 1 minute ago} other{Saved {minutes} minutes ago}}",
+  "@savedMinutesAgo": {
+    "description": "Age of cached data under an hour",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "savedHoursAgo": "{hours, plural, =1{Saved 1 hour ago} other{Saved {hours} hours ago}}",
+  "@savedHoursAgo": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "savedDaysAgo": "{days, plural, =1{Saved yesterday} other{Saved {days} days ago}}",
+  "@savedDaysAgo": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "savedOnDevice": "Found in meals saved on this device",
+  "refreshFailed": "Could not refresh",
+  "addToPlan": "Add to plan",
+  "saveToCollection": "Save to collection",
+  "addedToPlan": "Added to {day}, {slot}",
+  "@addedToPlan": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      },
+      "slot": {
+        "type": "String"
+      }
+    }
+  },
+  "chooseDay": "Day",
+  "chooseSlot": "Meal",
+  "add": "Add",
+  "monday": "Monday",
+  "tuesday": "Tuesday",
+  "wednesday": "Wednesday",
+  "thursday": "Thursday",
+  "friday": "Friday",
+  "saturday": "Saturday",
+  "sunday": "Sunday",
+  "breakfast": "Breakfast",
+  "lunch": "Lunch",
+  "dinner": "Dinner",
+  "plannerTitle": "Weekly plan",
+  "emptyPlan": "Your week is empty",
+  "emptyPlanHint": "Open a meal and tap Add to plan.",
+  "shoppingList": "Shopping list",
+  "moveUp": "Move up",
+  "moveDown": "Move down",
+  "moveTo": "Move to…",
+  "remove": "Remove",
+  "cookReminder": "Cook reminder",
+  "reminderDenied": "Notifications are turned off for this app.",
+  "reminderTitle": "Time to start cooking",
+  "reminderBody": "{meal} is up next on your plan.",
+  "@reminderBody": {
+    "placeholders": {
+      "meal": {
+        "type": "String"
+      }
+    }
+  },
+  "emptyShopping": "Nothing to buy yet",
+  "emptyShoppingHint": "Plan some meals to build your list.",
+  "uncheckAll": "Uncheck all",
+  "usedIn": "For {meals}",
+  "@usedIn": {
+    "placeholders": {
+      "meals": {
+        "type": "String"
+      }
+    }
+  },
+  "newCollection": "New collection",
+  "collectionName": "Name",
+  "create": "Create",
+  "cancel": "Cancel",
+  "save": "Save",
+  "rename": "Rename",
+  "delete": "Delete",
+  "deleteCollection": "Delete \"{name}\"? Its meals stay saved elsewhere.",
+  "@deleteCollection": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "emptyCollections": "No collections yet",
+  "emptyCollectionsHint": "Create one, then save meals to it.",
+  "emptyCollection": "No meals here yet",
+  "emptyCollectionHint": "Save meals from a meal's page.",
+  "mealCount": "{count, plural, =0{No meals} =1{1 meal} other{{count} meals}}",
+  "@mealCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "nameEmpty": "Enter a name",
+  "nameTooLong": "Use at most {max} characters",
+  "@nameTooLong": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "nameDuplicate": "You already have a collection with this name"
+}

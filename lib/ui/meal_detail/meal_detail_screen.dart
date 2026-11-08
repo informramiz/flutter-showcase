@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_showcase/domain/models/meal.dart';
-import 'package:flutter_showcase/ui/core/strings.dart';
+import 'package:flutter_showcase/ui/core/l10n.dart';
 import 'package:flutter_showcase/ui/core/widgets/meal_thumbnail.dart';
 import 'package:flutter_showcase/ui/core/widgets/state_views.dart';
 import 'package:flutter_showcase/ui/meal_detail/meal_detail_view_model.dart';
@@ -23,8 +23,8 @@ class MealDetailScreen extends ConsumerWidget {
           if (meal.hasValue)
             IconButton(
               tooltip: state.isFavourite
-                  ? Strings.removeFavourite
-                  : Strings.addFavourite,
+                  ? context.l10n.removeFavourite
+                  : context.l10n.addFavourite,
               icon: Icon(
                 state.isFavourite ? Icons.favorite : Icons.favorite_border,
               ),
@@ -71,7 +71,7 @@ class _MealBody extends StatelessWidget {
               ),
               if (meal.ingredients.isNotEmpty) ...[
                 const SizedBox(height: 16),
-                Text(Strings.ingredients, style: text.titleLarge),
+                Text(context.l10n.ingredients, style: text.titleLarge),
                 const SizedBox(height: 4),
                 for (final i in meal.ingredients)
                   ListTile(
@@ -83,7 +83,7 @@ class _MealBody extends StatelessWidget {
               ],
               if (meal.instructions case final steps?) ...[
                 const SizedBox(height: 16),
-                Text(Strings.instructions, style: text.titleLarge),
+                Text(context.l10n.instructions, style: text.titleLarge),
                 const SizedBox(height: 8),
                 Text(steps),
               ],
