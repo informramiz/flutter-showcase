@@ -70,7 +70,7 @@ class _PlanList extends StatelessWidget {
   }
 }
 
-enum _EntryAction { moveUp, moveDown, moveTo, remove }
+enum _EntryAction { moveUp, moveDown, moveTo, reminder, remove }
 
 class _EntryTile extends ConsumerWidget {
   const _EntryTile({required this.entry});
@@ -88,7 +88,19 @@ class _EntryTile extends ConsumerWidget {
         child: MealThumbnail(url: entry.meal.thumbnailUrl, size: 48),
       ),
       title: Text(entry.meal.name),
-      subtitle: Text(l10n.slotName(entry.slot)),
+      subtitle: Row(
+        children: [
+          Text(l10n.slotName(entry.slot)),
+          if (entry.reminderEnabled) ...[
+            const SizedBox(width: 6),
+            Icon(
+              Icons.notifications_active_outlined,
+              key: ValueKey('reminder-on-${entry.entryId}'),
+              size: 16,
+            ),
+          ],
+        ],
+      ),
       onTap: () => context.push(Routes.meal(entry.meal.id)),
       trailing: PopupMenuButton<_EntryAction>(
         onSelected: (action) => unawaited(
@@ -96,6 +108,7 @@ class _EntryTile extends ConsumerWidget {
             _EntryAction.moveUp => viewModel.moveUp(entry),
             _EntryAction.moveDown => viewModel.moveDown(entry),
             _EntryAction.moveTo => _moveTo(context, viewModel),
+            _EntryAction.reminder => _toggleReminder(context, viewModel),
             _EntryAction.remove => viewModel.remove(entry),
           },
         ),
@@ -108,6 +121,12 @@ class _EntryTile extends ConsumerWidget {
               child: Text(l10n.moveDown),
             ),
           PopupMenuItem(value: _EntryAction.moveTo, child: Text(l10n.moveTo)),
+          if (viewModel.remindersSupported)
+            CheckedPopupMenuItem(
+              value: _EntryAction.reminder,
+              checked: entry.reminderEnabled,
+              child: Text(l10n.cookReminder),
+            ),
           PopupMenuItem(value: _EntryAction.remove, child: Text(l10n.remove)),
         ],
       ),
@@ -120,7 +139,33 @@ class _EntryTile extends ConsumerWidget {
       title: context.l10n.moveTo,
       initial: (day: entry.day, slot: entry.slot),
     );
-    if (target == null) return;
-    await viewModel.moveTo(entry, target.day, target.slot);
+    if (target == null || !context.mounted) return;
+    await viewModel.moveTo(
+      entry,
+      target.day,
+      target.slot,
+      reminder: _reminderText(context),
+    );
   }
+
+  Future<void> _toggleReminder(
+    BuildContext context,
+    PlannerViewModel viewModel,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final deniedMessage = context.l10n.reminderDenied;
+    final changed = await viewModel.setReminder(
+      entry,
+      enabled: !entry.reminderEnabled,
+      text: _reminderText(context),
+    );
+    if (!changed) {
+      messenger.showSnackBar(SnackBar(content: Text(deniedMessage)));
+    }
+  }
+
+  ReminderText _reminderText(BuildContext context) => (
+    title: context.l10n.reminderTitle,
+    body: context.l10n.reminderBody(entry.meal.name),
+  );
 }

@@ -22,17 +22,23 @@ class _BrokenPlanner extends FakePlannerRepository {
   Stream<List<PlannedMeal>> watchPlan() => Stream.error(StateError('disk'));
 }
 
+const ReminderText text = (title: 'Cook', body: 'Pasta next');
+
 void main() {
   final first = entry(1, pasta, 0);
   final second = entry(2, curry, 1);
+  late FakeCookReminderService reminders;
 
   Future<(ProviderContainer, FakePlannerRepository)> setUpVm(
-    List<PlannedMeal> plan,
-  ) async {
+    List<PlannedMeal> plan, {
+    bool granted = true,
+  }) async {
     final fake = FakePlannerRepository(plan);
+    reminders = FakeCookReminderService(granted: granted);
     final container = await makeContainer(
       stubbedRepository(),
       plannerRepository: fake,
+      cookReminderService: reminders,
     );
     container.listen(plannerViewModelProvider, (_, _) {});
     await pumpEventQueue();
@@ -82,10 +88,11 @@ void main() {
     final (container, fake) = await setUpVm([first, second, friday]);
     final vm = container.read(plannerViewModelProvider.notifier);
 
-    await vm.moveTo(first, PlanDay.monday, MealSlot.dinner);
-    await vm.moveTo(first, PlanDay.friday, MealSlot.dinner);
+    await vm.moveTo(first, PlanDay.monday, MealSlot.dinner, reminder: text);
+    await vm.moveTo(first, PlanDay.friday, MealSlot.dinner, reminder: text);
 
     expect(fake.calls, ['move 1 friday dinner 1']);
+    expect(reminders.calls, isEmpty);
   });
 
   test('remove deletes the entry', () async {
@@ -95,5 +102,61 @@ void main() {
 
     expect(fake.calls, ['remove 1']);
     expect(container.read(plannerViewModelProvider).plan.value, [second]);
+  });
+
+  group('cook reminders', () {
+    // testNow is Sunday 2026-11-08 12:00; Monday dinner is at 19:00.
+    final mondayReminder = DateTime(2026, 11, 9, 18);
+
+    test('turning one on asks permission, schedules and saves', () async {
+      final (container, fake) = await setUpVm([first]);
+      final vm = container.read(plannerViewModelProvider.notifier);
+
+      expect(vm.remindersSupported, isTrue);
+      expect(await vm.setReminder(first, enabled: true, text: text), isTrue);
+
+      expect(reminders.calls, [
+        'permission',
+        'schedule 1 $mondayReminder /meal/${pasta.id} Pasta next',
+      ]);
+      expect(fake.calls, ['reminder 1 true']);
+    });
+
+    test('a refused permission changes nothing', () async {
+      final (container, fake) = await setUpVm([first], granted: false);
+      final vm = container.read(plannerViewModelProvider.notifier);
+
+      expect(await vm.setReminder(first, enabled: true, text: text), isFalse);
+
+      expect(reminders.calls, ['permission']);
+      expect(fake.calls, isEmpty);
+    });
+
+    test('turning one off cancels it', () async {
+      final on = first.copyWith(reminderEnabled: true);
+      final (container, fake) = await setUpVm([on]);
+
+      await container
+          .read(plannerViewModelProvider.notifier)
+          .setReminder(on, enabled: false, text: text);
+
+      expect(reminders.calls, ['cancel 1']);
+      expect(fake.calls, ['reminder 1 false']);
+    });
+
+    test('an enabled reminder moves and is removed with its entry', () async {
+      final on = first.copyWith(reminderEnabled: true);
+      final (container, _) = await setUpVm([on]);
+      final vm = container.read(plannerViewModelProvider.notifier);
+
+      await vm.moveTo(on, PlanDay.tuesday, MealSlot.lunch, reminder: text);
+      await vm.remove(on);
+
+      final tuesdayLunch = DateTime(2026, 11, 10, 12);
+      expect(reminders.calls, [
+        'schedule 1 $tuesdayLunch /meal/${pasta.id} Pasta next',
+        'cancel 1',
+      ]);
+    });
   });
 }

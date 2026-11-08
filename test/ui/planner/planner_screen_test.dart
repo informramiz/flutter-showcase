@@ -17,9 +17,15 @@ void main() {
 
   Future<void> openPlanner(
     WidgetTester tester,
-    FakePlannerRepository fake,
-  ) async {
-    await pumpApp(tester, stubbedRepository(), plannerRepository: fake);
+    FakePlannerRepository fake, {
+    FakeCookReminderService? reminders,
+  }) async {
+    await pumpApp(
+      tester,
+      stubbedRepository(),
+      plannerRepository: fake,
+      cookReminderService: reminders,
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.text(l10n.plannerTab).last);
     await tester.pumpAndSettle();
@@ -96,5 +102,47 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(l10n.ingredients), findsOneWidget);
+  });
+
+  testWidgets('the menu toggles a cook reminder', (tester) async {
+    final fake = FakePlannerRepository([entry(1, 0)]);
+    final reminders = FakeCookReminderService();
+    await openPlanner(tester, fake, reminders: reminders);
+
+    await chooseFromMenu(tester, 1, l10n.cookReminder);
+    expect(find.byKey(const ValueKey('reminder-on-1')), findsOneWidget);
+    await chooseFromMenu(tester, 1, l10n.cookReminder);
+
+    expect(find.byKey(const ValueKey('reminder-on-1')), findsNothing);
+    expect(fake.calls, ['reminder 1 true', 'reminder 1 false']);
+    expect(reminders.calls.first, 'permission');
+    expect(reminders.calls.last, 'cancel 1');
+  });
+
+  testWidgets('a refused permission explains why', (tester) async {
+    await openPlanner(
+      tester,
+      FakePlannerRepository([entry(1, 0)]),
+      reminders: FakeCookReminderService(granted: false),
+    );
+
+    await chooseFromMenu(tester, 1, l10n.cookReminder);
+
+    expect(find.text(l10n.reminderDenied), findsOneWidget);
+  });
+
+  testWidgets('no reminder option where reminders are unsupported', (
+    tester,
+  ) async {
+    await openPlanner(
+      tester,
+      FakePlannerRepository([entry(1, 0)]),
+      reminders: FakeCookReminderService(isSupported: false),
+    );
+
+    await tester.tap(find.byIcon(Icons.adaptive.more));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.cookReminder), findsNothing);
   });
 }

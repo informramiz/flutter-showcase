@@ -5,6 +5,8 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_showcase/core/network/failure_interceptor.dart';
 import 'package:flutter_showcase/core/time/clock.dart';
 import 'package:flutter_showcase/data/database/app_database.dart';
@@ -16,6 +18,8 @@ import 'package:flutter_showcase/data/repositories/favourites_repository_impl.da
 import 'package:flutter_showcase/data/repositories/meal_repository_impl.dart';
 import 'package:flutter_showcase/data/repositories/planner_repository_impl.dart';
 import 'package:flutter_showcase/data/services/connectivity_service.dart';
+import 'package:flutter_showcase/data/services/cook_reminder_service.dart';
+import 'package:flutter_showcase/data/services/local_cook_reminder_service.dart';
 import 'package:flutter_showcase/data/services/meal_api_service.dart';
 import 'package:flutter_showcase/data/services/preferences_service.dart';
 import 'package:flutter_showcase/domain/repositories/collections_repository.dart';
@@ -82,6 +86,17 @@ PreferencesService preferencesService(Ref ref) =>
 
 @Riverpod(keepAlive: true)
 ConnectivityService connectivityService(Ref ref) => ConnectivityService();
+
+/// Local notifications on Android and iOS; browsers can't schedule them.
+@Riverpod(keepAlive: true)
+CookReminderService cookReminderService(Ref ref) => kIsWeb
+    ? const UnsupportedCookReminderService()
+    : LocalCookReminderService(FlutterLocalNotificationsPlugin());
+
+/// Routes of tapped cook reminders, for the app to open.
+@Riverpod(keepAlive: true)
+Stream<String> cookReminderTaps(Ref ref) =>
+    ref.watch(cookReminderServiceProvider).tappedRoutes;
 
 // Repositories (typed as their domain interface) -----------------------
 

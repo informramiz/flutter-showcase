@@ -66,5 +66,16 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.codebyramiz.flutterShowcase</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>mealfinder</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

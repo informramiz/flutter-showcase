@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_showcase/app.dart';
 import 'package:flutter_showcase/core/result/failure.dart';
 import 'package:flutter_showcase/core/result/result.dart';
+import 'package:flutter_showcase/data/services/cook_reminder_service.dart';
 import 'package:flutter_showcase/di/providers.dart';
 import 'package:flutter_showcase/domain/models/cached.dart';
 import 'package:flutter_showcase/domain/models/meal.dart';
@@ -62,6 +63,40 @@ class FakeFavouritesRepository implements FavouritesRepository {
         : [meal, ..._items];
     _changes.add(_items);
   }
+}
+
+/// Records reminder calls instead of talking to the notification plugin.
+class FakeCookReminderService implements CookReminderService {
+  FakeCookReminderService({this.isSupported = true, this.granted = true});
+
+  @override
+  final bool isSupported;
+  bool granted;
+  final calls = <String>[];
+  final taps = StreamController<String>.broadcast(sync: true);
+
+  @override
+  Future<bool> requestPermission() async {
+    calls.add('permission');
+    return granted;
+  }
+
+  @override
+  Future<void> scheduleWeekly({
+    required int id,
+    required DateTime at,
+    required String title,
+    required String body,
+    required String route,
+  }) async {
+    calls.add('schedule $id $at $route $body');
+  }
+
+  @override
+  Future<void> cancel(int id) async => calls.add('cancel $id');
+
+  @override
+  Stream<String> get tappedRoutes => taps.stream;
 }
 
 /// In-memory plan. Writes update the emitted plan and are logged in
@@ -130,6 +165,11 @@ class FakePlannerRepository implements PlannerRepository {
   @override
   Future<void> setReminder(int entryId, {required bool enabled}) async {
     calls.add('reminder $entryId $enabled');
+    _plan = [
+      for (final e in _plan)
+        e.entryId == entryId ? e.copyWith(reminderEnabled: enabled) : e,
+    ];
+    _planChanges.add(_plan);
   }
 
   @override
@@ -238,6 +278,7 @@ Future<List<Override>> baseOverrides(
   FavouritesRepository? favouritesRepository,
   PlannerRepository? plannerRepository,
   CollectionsRepository? collectionsRepository,
+  CookReminderService? cookReminderService,
 }) async => [
   sharedPreferencesProvider.overrideWithValue(await fakePrefs(prefs)),
   clockProvider.overrideWithValue(() => testNow),
@@ -251,6 +292,9 @@ Future<List<Override>> baseOverrides(
   collectionsRepositoryProvider.overrideWithValue(
     collectionsRepository ?? FakeCollectionsRepository(),
   ),
+  cookReminderServiceProvider.overrideWithValue(
+    cookReminderService ?? FakeCookReminderService(),
+  ),
   isOnlineProvider.overrideWith((ref) => Stream.value(online)),
 ];
 
@@ -261,6 +305,7 @@ Future<ProviderContainer> makeContainer(
   FavouritesRepository? favouritesRepository,
   PlannerRepository? plannerRepository,
   CollectionsRepository? collectionsRepository,
+  CookReminderService? cookReminderService,
   List<Override> overrides = const [],
 }) async {
   final container = ProviderContainer(
@@ -273,6 +318,7 @@ Future<ProviderContainer> makeContainer(
         favouritesRepository: favouritesRepository,
         plannerRepository: plannerRepository,
         collectionsRepository: collectionsRepository,
+        cookReminderService: cookReminderService,
       ),
       ...overrides,
     ],
@@ -289,6 +335,7 @@ Future<void> pumpApp(
   bool online = true,
   PlannerRepository? plannerRepository,
   CollectionsRepository? collectionsRepository,
+  CookReminderService? cookReminderService,
   List<Override> overrides = const [],
 }) async {
   await tester.pumpWidget(
@@ -301,6 +348,7 @@ Future<void> pumpApp(
           online: online,
           plannerRepository: plannerRepository,
           collectionsRepository: collectionsRepository,
+          cookReminderService: cookReminderService,
         ),
         ...overrides,
       ],
@@ -318,6 +366,7 @@ Future<void> pumpScreen(
   List<Meal> favourites = const [],
   PlannerRepository? plannerRepository,
   CollectionsRepository? collectionsRepository,
+  CookReminderService? cookReminderService,
   List<Override> overrides = const [],
 }) async {
   await tester.pumpWidget(
@@ -329,6 +378,7 @@ Future<void> pumpScreen(
           favourites: favourites,
           plannerRepository: plannerRepository,
           collectionsRepository: collectionsRepository,
+          cookReminderService: cookReminderService,
         ),
         ...overrides,
       ],

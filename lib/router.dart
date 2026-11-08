@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_showcase/ui/collections/collection_detail_screen.dart';
 import 'package:flutter_showcase/ui/collections/collections_screen.dart';
+import 'package:flutter_showcase/ui/core/l10n.dart';
 import 'package:flutter_showcase/ui/core/widgets/home_shell.dart';
+import 'package:flutter_showcase/ui/core/widgets/state_views.dart';
 import 'package:flutter_showcase/ui/favourites/favourites_screen.dart';
 import 'package:flutter_showcase/ui/meal_detail/meal_detail_screen.dart';
 import 'package:flutter_showcase/ui/meals/meals_screen.dart';
@@ -12,6 +14,8 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'router.g.dart';
 
+/// App paths. The same paths open from deep links such as
+/// `mealfinder://open/meal/52772` and from tapped cook reminders.
 abstract final class Routes {
   static const meals = '/';
   static const favourites = '/favourites';
@@ -83,8 +87,13 @@ GoRouter router(Ref ref) {
             MealDetailScreen(id: state.pathParameters['id']!),
       ),
     ],
-    errorBuilder: (context, state) =>
-        const Scaffold(body: Center(child: Text('Page not found'))),
+    errorBuilder: (context, state) => Scaffold(
+      appBar: AppBar(),
+      body: EmptyView(
+        icon: Icons.explore_off_outlined,
+        title: context.l10n.pageNotFound,
+      ),
+    ),
   );
   ref.onDispose(router.dispose);
   return router;
