@@ -129,7 +129,7 @@ void main() {
     expect(_item(items, 'garlic').totals, [
       const Measure.named(amount: 3, unit: 'clove'),
     ]);
-    expect(_item(items, 'eggs').totals, [const Measure.count(5)]);
+    expect(_item(items, 'egg').totals, [const Measure.count(5)]);
   });
 
   test('notes are kept when nothing measurable was asked for', () {
@@ -155,11 +155,24 @@ void main() {
     expect(_item(items, 'olive oil').name, 'Olive  Oil'.trim());
   });
 
-  test('a plural without its singular keeps its own key', () {
-    final items = builder.build([
-      _meal('A', {'Peas': '200g'}),
+  test('an item key does not change when another recipe is planned', () {
+    final alone = builder.build([
+      _meal('A', {'Eggs': '2'}),
     ]);
-    expect(items.single.key, 'peas');
+    final together = builder.build([
+      _meal('A', {'Eggs': '2'}),
+      _meal('B', {'Egg': '1'}),
+    ]);
+    expect(alone.single.key, 'egg');
+    expect(together.single.key, 'egg');
+    final checked = builder.build(
+      [
+        _meal('A', {'Eggs': '2'}),
+        _meal('B', {'Egg': '1'}),
+      ],
+      checkedKeys: {alone.single.key},
+    );
+    expect(checked.single.checked, isTrue);
   });
 
   test('meal names are listed once per item', () {

@@ -5,8 +5,9 @@ import 'package:flutter_showcase/domain/services/ingredient_measure_parser.dart'
 
 /// Builds a de-duplicated shopping list from planned meals.
 ///
-/// Ingredients merge by normalised name ("Olive  Oil" = "olive oil"), and a
-/// plural merges into its singular when both appear ("Eggs" + "Egg"). Amounts
+/// Ingredients merge by normalised, singularised name ("Olive  Oil" =
+/// "olive oil", "Eggs" = "Egg"), so an item's key never depends on which other
+/// recipes are planned and its checked state survives plan changes. Amounts
 /// sum within a dimension (all mass in grams, all volume in millilitres) and
 /// are shown in metric when any recipe used metric, imperial otherwise.
 class ShoppingListBuilder {
@@ -19,8 +20,9 @@ class ShoppingListBuilder {
   static final _whitespace = RegExp(r'\s+');
 
   /// The key an ingredient name is grouped and stored under.
-  static String keyFor(String name) =>
-      name.trim().toLowerCase().replaceAll(_whitespace, ' ');
+  static String keyFor(String name) => IngredientMeasureParser.singularize(
+    name.trim().toLowerCase().replaceAll(_whitespace, ' '),
+  );
 
   List<ShoppingItem> build(
     Iterable<Meal> meals, {
@@ -36,7 +38,6 @@ class ShoppingListBuilder {
             .add(_parser.parse(ingredient.measure), meal.name);
       }
     }
-    _mergePlurals(groups);
 
     final items = [
       for (final MapEntry(:key, :value) in groups.entries)
@@ -49,16 +50,6 @@ class ShoppingListBuilder {
         ),
     ]..sort((a, b) => a.key.compareTo(b.key));
     return items;
-  }
-
-  static void _mergePlurals(Map<String, _Group> groups) {
-    for (final key in groups.keys.toList()) {
-      final singular = IngredientMeasureParser.singularize(key);
-      if (singular == key) continue;
-      final target = groups[singular];
-      if (target == null) continue;
-      target.absorb(groups.remove(key)!);
-    }
   }
 }
 
@@ -98,21 +89,6 @@ class _Group {
       case NoteMeasure(:final text):
         if (text.isNotEmpty) notes.add(text);
     }
-  }
-
-  void absorb(_Group other) {
-    mealNames.addAll(other.mealNames);
-    for (final MapEntry(:key, :value) in other.named.entries) {
-      named[key] = (named[key] ?? 0) + value;
-    }
-    notes.addAll(other.notes);
-    massGrams += other.massGrams;
-    volumeMl += other.volumeMl;
-    count += other.count;
-    hasMass |= other.hasMass;
-    hasVolume |= other.hasVolume;
-    metricMass |= other.metricMass;
-    metricVolume |= other.metricVolume;
   }
 
   List<Measure> totals() => [

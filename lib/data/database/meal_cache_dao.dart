@@ -216,6 +216,7 @@ class MealCacheDao extends DatabaseAccessor<AppDatabase>
       name: meal.name,
       thumbnailUrl: meal.thumbnailUrl,
       category: Value(meal.category),
+      area: Value(meal.area),
     ),
     onConflict: DoUpdate(
       (_) => CachedMealsCompanion(
@@ -225,6 +226,7 @@ class MealCacheDao extends DatabaseAccessor<AppDatabase>
         category: meal.category == null
             ? const Value.absent()
             : Value(meal.category),
+        area: meal.area == null ? const Value.absent() : Value(meal.area),
       ),
     ),
   );
@@ -252,6 +254,7 @@ class MealCacheDao extends DatabaseAccessor<AppDatabase>
     name: row.name,
     thumbnailUrl: row.thumbnailUrl,
     category: row.category,
+    area: row.area,
   );
 }
 

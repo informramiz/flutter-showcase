@@ -65,15 +65,26 @@ class PlannerViewModel extends _$PlannerViewModel {
     required ReminderText reminder,
   }) async {
     if (entry.day == day && entry.slot == slot) return;
-    await _repository.move(entry.entryId, day, slot, _countIn(day, slot));
-    if (entry.reminderEnabled) {
-      await _schedule(entry.copyWith(day: day, slot: slot), reminder);
+    if (!entry.reminderEnabled) {
+      await _repository.move(entry.entryId, day, slot, _countIn(day, slot));
+      return;
+    }
+    // Schedule the new time first; if the move then fails, put the old
+    // reminder back so the stored plan and the notification agree.
+    await _schedule(entry.copyWith(day: day, slot: slot), reminder);
+    try {
+      await _repository.move(entry.entryId, day, slot, _countIn(day, slot));
+    } on Object {
+      await _schedule(entry, reminder);
+      rethrow;
     }
   }
 
   Future<void> remove(PlannedMeal entry) async {
-    await _repository.remove(entry.entryId);
+    // Cancel first: a failed cancel leaves the entry (and its reminder) in
+    // place instead of an orphaned weekly notification.
     if (entry.reminderEnabled) await _reminders.cancel(entry.entryId);
+    await _repository.remove(entry.entryId);
   }
 
   /// Turns [entry]'s weekly cook reminder on or off. Returns `false` when
@@ -86,10 +97,16 @@ class PlannerViewModel extends _$PlannerViewModel {
     if (enabled) {
       if (!await _reminders.requestPermission()) return false;
       await _schedule(entry, text);
+      try {
+        await _repository.setReminder(entry.entryId, enabled: true);
+      } on Object {
+        await _reminders.cancel(entry.entryId);
+        rethrow;
+      }
     } else {
+      await _repository.setReminder(entry.entryId, enabled: false);
       await _reminders.cancel(entry.entryId);
     }
-    await _repository.setReminder(entry.entryId, enabled: enabled);
     return true;
   }
 

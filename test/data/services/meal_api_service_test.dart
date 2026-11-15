@@ -87,6 +87,18 @@ void main() {
       expect(await api.search('zzz'), isEmpty);
     });
 
+    test('a body without the meals key is a parse failure', () {
+      stub({'unexpected': 1});
+      expect(api.search('x'), throwsA(isA<ParseFailure>()));
+    });
+
+    test('a non-object list member is a parse failure', () {
+      stub({
+        'meals': [mealJson(), 'oops'],
+      });
+      expect(api.search('x'), throwsA(isA<ParseFailure>()));
+    });
+
     test('categories reads strCategory and skips malformed rows', () async {
       stub({
         'meals': [

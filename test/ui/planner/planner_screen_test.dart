@@ -6,6 +6,7 @@ import '../../helpers/fixtures.dart';
 import '../../helpers/harness.dart';
 
 void main() {
+  setUp(() => WidgetController.hitTestWarningShouldBeFatal = true);
   PlannedMeal entry(int id, int position, {PlanDay day = PlanDay.monday}) =>
       PlannedMeal(
         entryId: id,
@@ -39,7 +40,15 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text(label));
+    // Tap the menu item itself: a checked item's inner text ignores pointers.
+    await tester.tap(
+      find
+          .ancestor(
+            of: find.text(label),
+            matching: find.byWidgetPredicate((w) => w is PopupMenuEntry),
+          )
+          .first,
+    );
     await tester.pumpAndSettle();
   }
 
@@ -67,18 +76,29 @@ void main() {
     final fake = FakePlannerRepository([entry(1, 0), entry(2, 1)]);
     await openPlanner(tester, fake);
 
+    double top(String meal) => tester.getTopLeft(find.text(meal)).dy;
+    expect(top('Spaghetti Bolognese'), lessThan(top('Chicken Curry')));
+
     await chooseFromMenu(tester, 1, l10n.moveDown);
-    await chooseFromMenu(tester, 2, l10n.moveUp);
+    expect(top('Chicken Curry'), lessThan(top('Spaghetti Bolognese')));
+
+    await chooseFromMenu(tester, 1, l10n.moveUp);
+    expect(top('Spaghetti Bolognese'), lessThan(top('Chicken Curry')));
+
     await chooseFromMenu(tester, 1, l10n.moveTo);
     await tester.tap(find.text(l10n.sunday));
+    await tester.pumpAndSettle();
     await tester.tap(find.text(l10n.lunch));
+    await tester.pumpAndSettle();
     await tester.tap(find.text(l10n.add));
     await tester.pumpAndSettle();
+    expect(find.text(l10n.sunday), findsOneWidget);
+
     await chooseFromMenu(tester, 2, l10n.remove);
 
     expect(fake.calls, [
       'move 1 monday dinner 1',
-      'move 2 monday dinner 0',
+      'move 1 monday dinner 0',
       'move 1 sunday lunch 0',
       'remove 2',
     ]);

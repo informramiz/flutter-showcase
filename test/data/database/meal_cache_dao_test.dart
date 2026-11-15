@@ -32,6 +32,14 @@ void main() {
     expect(replaced.fetchedAt, later);
   });
 
+  test('a cached list keeps the area the list card shows', () async {
+    final key = searchKey('pasta');
+    await dao.saveQuery(key, [pasta.copyWith(area: 'Italian')], at);
+
+    final hit = await dao.mealsForQuery(key);
+    expect(hit!.data.single.area, 'Italian');
+  });
+
   test('search keys ignore case and surrounding spaces', () {
     expect(searchKey(' PASTA '), searchKey('pasta'));
     expect(categoryKey('Beef'), 'category:Beef');
@@ -112,6 +120,7 @@ void main() {
         name: 'Spaghetti Bolognese',
         thumbnailUrl: 'https://example.com/pasta.jpg',
         category: 'Pasta',
+        area: 'Italian',
       ),
     ]);
   });

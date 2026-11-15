@@ -17,6 +17,14 @@ PlannedMeal entry(int id, Meal meal, int position, {PlanDay? day}) =>
       meal: meal,
     );
 
+class _FailingMovePlanner extends FakePlannerRepository {
+  _FailingMovePlanner(super.plan);
+
+  @override
+  Future<void> move(int entryId, PlanDay day, MealSlot slot, int index) =>
+      Future.error(StateError('disk'));
+}
+
 class _BrokenPlanner extends FakePlannerRepository {
   @override
   Stream<List<PlannedMeal>> watchPlan() => Stream.error(StateError('disk'));
@@ -160,6 +168,29 @@ void main() {
         'schedule 1 $tuesdayLunch /meal/${pasta.id} Pasta next',
         'cancel 1',
       ]);
+    });
+
+    test('a failed move puts the old reminder time back', () async {
+      final on = first.copyWith(reminderEnabled: true);
+      final container = await makeContainer(
+        stubbedRepository(),
+        plannerRepository: _FailingMovePlanner([on]),
+        cookReminderService: reminders = FakeCookReminderService(),
+      );
+      container.listen(plannerViewModelProvider, (_, _) {});
+      await pumpEventQueue();
+
+      await expectLater(
+        container
+            .read(plannerViewModelProvider.notifier)
+            .moveTo(on, PlanDay.tuesday, MealSlot.lunch, reminder: text),
+        throwsStateError,
+      );
+
+      expect(
+        reminders.calls.last,
+        'schedule 1 $mondayReminder /meal/${pasta.id} Pasta next',
+      );
     });
   });
 }
