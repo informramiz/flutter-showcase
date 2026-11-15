@@ -6,6 +6,7 @@ import 'package:flutter_showcase/domain/models/plan.dart';
 import 'package:flutter_showcase/router.dart';
 import 'package:flutter_showcase/ui/core/l10n.dart';
 import 'package:flutter_showcase/ui/core/plan_labels.dart';
+import 'package:flutter_showcase/ui/core/run_command.dart';
 import 'package:flutter_showcase/ui/core/widgets/meal_thumbnail.dart';
 import 'package:flutter_showcase/ui/core/widgets/state_views.dart';
 import 'package:flutter_showcase/ui/planner/plan_slot_sheet.dart';
@@ -108,13 +109,17 @@ class _EntryTile extends ConsumerWidget {
         Routes.mealFrom(Routes.planner, entry.meal.id),
       ),
       trailing: PopupMenuButton<_EntryAction>(
-        onSelected: (action) => unawaited(
-          switch (action) {
+        onSelected: (action) => runCommand(
+          context,
+          () => switch (action) {
             _EntryAction.moveUp => viewModel.moveUp(entry),
             _EntryAction.moveDown => viewModel.moveDown(entry),
             _EntryAction.moveTo => _moveTo(context, viewModel),
             _EntryAction.reminder => _toggleReminder(context, viewModel),
-            _EntryAction.remove => viewModel.remove(entry),
+            _EntryAction.remove => viewModel.remove(
+              entry,
+              reminder: _reminderText(context),
+            ),
           },
         ),
         itemBuilder: (_) => [

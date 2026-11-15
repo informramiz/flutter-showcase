@@ -106,6 +106,17 @@ void main() {
       );
     });
 
+    test('keeps the whole text of a compound measure', () {
+      expect(
+        parser.parse('1 x 400g tin'),
+        const Measure.note('1 x 400g tin'),
+      );
+      expect(
+        parser.parse('1 x 200g tin'),
+        const Measure.note('1 x 200g tin'),
+      );
+    });
+
     test('keeps words that only look plural', () {
       expect(
         parser.parse('1 glass'),

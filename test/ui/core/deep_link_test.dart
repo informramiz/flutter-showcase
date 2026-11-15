@@ -54,4 +54,25 @@ void main() {
 
     expect(find.text(l10n.ingredients), findsOneWidget);
   });
+
+  testWidgets('a second tap on the same reminder opens it again', (
+    tester,
+  ) async {
+    final reminders = FakeCookReminderService();
+    await pumpApp(tester, stubbedRepository(), cookReminderService: reminders);
+    await tester.pumpAndSettle();
+
+    reminders.taps.add('/meal/${pasta.id}');
+    await tester.pumpAndSettle();
+    reminders.taps.add('/meal/${pasta.id}');
+    await tester.pumpAndSettle();
+
+    // Two meal pages are stacked: going back once still shows a meal.
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.ingredients), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.ingredients), findsNothing);
+  });
 }

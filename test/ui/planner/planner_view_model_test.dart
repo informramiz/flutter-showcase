@@ -17,11 +17,19 @@ PlannedMeal entry(int id, Meal meal, int position, {PlanDay? day}) =>
       meal: meal,
     );
 
-class _FailingMovePlanner extends FakePlannerRepository {
-  _FailingMovePlanner(super.plan);
+/// A planner whose writes fail, to check that reminders are put back.
+class _FailingPlanner extends FakePlannerRepository {
+  _FailingPlanner(super.plan);
 
   @override
   Future<void> move(int entryId, PlanDay day, MealSlot slot, int index) =>
+      Future.error(StateError('disk'));
+
+  @override
+  Future<void> remove(int entryId) => Future.error(StateError('disk'));
+
+  @override
+  Future<void> setReminder(int entryId, {required bool enabled}) =>
       Future.error(StateError('disk'));
 }
 
@@ -106,7 +114,9 @@ void main() {
   test('remove deletes the entry', () async {
     final (container, fake) = await setUpVm([first, second]);
 
-    await container.read(plannerViewModelProvider.notifier).remove(first);
+    await container
+        .read(plannerViewModelProvider.notifier)
+        .remove(first, reminder: text);
 
     expect(fake.calls, ['remove 1']);
     expect(container.read(plannerViewModelProvider).plan.value, [second]);
@@ -161,7 +171,7 @@ void main() {
       final vm = container.read(plannerViewModelProvider.notifier);
 
       await vm.moveTo(on, PlanDay.tuesday, MealSlot.lunch, reminder: text);
-      await vm.remove(on);
+      await vm.remove(on, reminder: text);
 
       final tuesdayLunch = DateTime(2026, 11, 10, 12);
       expect(reminders.calls, [
@@ -174,7 +184,7 @@ void main() {
       final on = first.copyWith(reminderEnabled: true);
       final container = await makeContainer(
         stubbedRepository(),
-        plannerRepository: _FailingMovePlanner([on]),
+        plannerRepository: _FailingPlanner([on]),
         cookReminderService: reminders = FakeCookReminderService(),
       );
       container.listen(plannerViewModelProvider, (_, _) {});
@@ -191,6 +201,64 @@ void main() {
         reminders.calls.last,
         'schedule 1 $mondayReminder /meal/${pasta.id} Pasta next',
       );
+    });
+
+    Future<ProviderContainer> failingContainer(PlannedMeal on) async {
+      final container = await makeContainer(
+        stubbedRepository(),
+        plannerRepository: _FailingPlanner([on]),
+        cookReminderService: reminders = FakeCookReminderService(),
+      );
+      container.listen(plannerViewModelProvider, (_, _) {});
+      await pumpEventQueue();
+      return container;
+    }
+
+    test('a failed delete puts the reminder back', () async {
+      final on = first.copyWith(reminderEnabled: true);
+      final container = await failingContainer(on);
+
+      await expectLater(
+        container
+            .read(plannerViewModelProvider.notifier)
+            .remove(on, reminder: text),
+        throwsStateError,
+      );
+
+      expect(reminders.calls, [
+        'cancel 1',
+        'schedule 1 $mondayReminder /meal/${pasta.id} Pasta next',
+      ]);
+    });
+
+    test('a failed save when turning off puts the reminder back', () async {
+      final on = first.copyWith(reminderEnabled: true);
+      final container = await failingContainer(on);
+
+      await expectLater(
+        container
+            .read(plannerViewModelProvider.notifier)
+            .setReminder(on, enabled: false, text: text),
+        throwsStateError,
+      );
+
+      expect(reminders.calls, [
+        'cancel 1',
+        'schedule 1 $mondayReminder /meal/${pasta.id} Pasta next',
+      ]);
+    });
+
+    test('a failed save when turning on cancels the new reminder', () async {
+      final container = await failingContainer(first);
+
+      await expectLater(
+        container
+            .read(plannerViewModelProvider.notifier)
+            .setReminder(first, enabled: true, text: text),
+        throwsStateError,
+      );
+
+      expect(reminders.calls.last, 'cancel 1');
     });
   });
 }

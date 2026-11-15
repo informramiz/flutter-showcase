@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_showcase/router.dart';
 import 'package:flutter_showcase/ui/core/l10n.dart';
+import 'package:flutter_showcase/ui/core/run_command.dart';
 import 'package:flutter_showcase/ui/core/widgets/meal_card.dart';
 import 'package:flutter_showcase/ui/core/widgets/state_views.dart';
 import 'package:flutter_showcase/ui/favourites/favourites_view_model.dart';
@@ -30,8 +31,10 @@ class FavouritesScreen extends ConsumerWidget {
                 itemBuilder: (context, i) => MealCard(
                   meal: favourites[i],
                   isFavourite: true,
-                  onToggleFavourite: () =>
-                      viewModel.toggleFavourite(favourites[i]),
+                  onToggleFavourite: () => runCommand(
+                    context,
+                    () => viewModel.toggleFavourite(favourites[i]),
+                  ),
                   onTap: () => context.push(
                     Routes.mealFrom(Routes.favourites, favourites[i].id),
                   ),

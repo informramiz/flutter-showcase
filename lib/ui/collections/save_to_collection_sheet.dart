@@ -6,6 +6,7 @@ import 'package:flutter_showcase/domain/models/meal.dart';
 import 'package:flutter_showcase/ui/collections/collection_actions.dart';
 import 'package:flutter_showcase/ui/collections/collections_view_model.dart';
 import 'package:flutter_showcase/ui/core/l10n.dart';
+import 'package:flutter_showcase/ui/core/run_command.dart';
 import 'package:flutter_showcase/ui/core/widgets/state_views.dart';
 
 /// Bottom sheet listing every collection with a checkbox for [meal].
@@ -54,7 +55,8 @@ class SaveToCollectionSheet extends ConsumerWidget {
                       value: state.selectedIds.contains(c.id),
                       title: Text(c.name),
                       subtitle: Text(l10n.mealCount(c.mealCount)),
-                      onChanged: (_) => unawaited(viewModel.toggle(c, meal)),
+                      onChanged: (_) =>
+                          runCommand(context, () => viewModel.toggle(c, meal)),
                     ),
                 ],
               ),
@@ -63,7 +65,8 @@ class SaveToCollectionSheet extends ConsumerWidget {
           ListTile(
             leading: const Icon(Icons.add),
             title: Text(l10n.newCollection),
-            onTap: () => unawaited(_create(context, ref, viewModel)),
+            onTap: () =>
+                runCommand(context, () => _create(context, ref, viewModel)),
           ),
         ],
       ),

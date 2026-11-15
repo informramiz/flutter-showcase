@@ -93,10 +93,19 @@ CookReminderService cookReminderService(Ref ref) => kIsWeb
     ? const UnsupportedCookReminderService()
     : LocalCookReminderService(FlutterLocalNotificationsPlugin());
 
-/// Routes of tapped cook reminders, for the app to open.
+/// One tap on a cook reminder. A class (identity equality) rather than the
+/// route string: Riverpod 3 drops a value equal to the previous one, which
+/// would swallow a second tap on the same meal.
+final class ReminderTap {
+  const ReminderTap(this.route);
+
+  final String route;
+}
+
+/// Tapped cook reminders, for the app to open.
 @Riverpod(keepAlive: true)
-Stream<String> cookReminderTaps(Ref ref) =>
-    ref.watch(cookReminderServiceProvider).tappedRoutes;
+Stream<ReminderTap> cookReminderTaps(Ref ref) =>
+    ref.watch(cookReminderServiceProvider).tappedRoutes.map(ReminderTap.new);
 
 // Repositories (typed as their domain interface) -----------------------
 

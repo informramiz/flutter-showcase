@@ -78,6 +78,9 @@ class IngredientMeasureParser {
     final rest = match.group(3)!.trim();
     if (rest.isEmpty) return Measure.count(amount);
 
+    // "1 x 400g tin": keep the whole text rather than just its first word.
+    if (rest.contains(RegExp(r'\d'))) return Measure.note(text);
+
     final word = rest.split(' ').first.replaceAll('.', '');
     final unit = _unitAliases[word];
     if (unit != null) return Measure.standard(amount: amount, unit: unit);

@@ -1,9 +1,8 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_showcase/domain/models/shopping_item.dart';
 import 'package:flutter_showcase/ui/core/l10n.dart';
+import 'package:flutter_showcase/ui/core/run_command.dart';
 import 'package:flutter_showcase/ui/core/widgets/state_views.dart';
 import 'package:flutter_showcase/ui/shopping/measure_text.dart';
 import 'package:flutter_showcase/ui/shopping/shopping_list_view_model.dart';
@@ -25,7 +24,7 @@ class ShoppingListScreen extends ConsumerWidget {
             IconButton(
               tooltip: context.l10n.uncheckAll,
               icon: const Icon(Icons.remove_done),
-              onPressed: () => unawaited(viewModel.uncheckAll()),
+              onPressed: () => runCommand(context, viewModel.uncheckAll),
             ),
         ],
       ),
@@ -42,7 +41,8 @@ class ShoppingListScreen extends ConsumerWidget {
                 itemCount: list.length,
                 itemBuilder: (context, i) => _ItemTile(
                   item: list[i],
-                  onChanged: () => unawaited(viewModel.toggle(list[i])),
+                  onChanged: () =>
+                      runCommand(context, () => viewModel.toggle(list[i])),
                 ),
               ),
       ),

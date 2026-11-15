@@ -6,6 +6,7 @@ import 'package:flutter_showcase/domain/models/meal_collection.dart';
 import 'package:flutter_showcase/ui/collections/collection_name_dialog.dart';
 import 'package:flutter_showcase/ui/collections/collections_view_model.dart';
 import 'package:flutter_showcase/ui/core/l10n.dart';
+import 'package:flutter_showcase/ui/core/run_command.dart';
 
 /// What the rename/delete menu on a collection offers.
 enum CollectionAction { rename, delete }
@@ -23,10 +24,13 @@ class CollectionMenu extends ConsumerWidget {
     final l10n = context.l10n;
     final viewModel = ref.read(collectionsViewModelProvider.notifier);
     return PopupMenuButton<CollectionAction>(
-      onSelected: (action) => unawaited(switch (action) {
-        CollectionAction.rename => _rename(context, viewModel),
-        CollectionAction.delete => _delete(context, viewModel),
-      }),
+      onSelected: (action) => runCommand(
+        context,
+        () => switch (action) {
+          CollectionAction.rename => _rename(context, viewModel),
+          CollectionAction.delete => _delete(context, viewModel),
+        },
+      ),
       itemBuilder: (_) => [
         PopupMenuItem(value: CollectionAction.rename, child: Text(l10n.rename)),
         PopupMenuItem(value: CollectionAction.delete, child: Text(l10n.delete)),
