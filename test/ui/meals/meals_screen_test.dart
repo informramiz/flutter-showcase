@@ -64,6 +64,20 @@ void main() {
     expect(find.text(l10n.emptyMealsHint), findsOneWidget);
   });
 
+  testWidgets('the empty state can be pulled to refresh', (tester) async {
+    final repository = stubbedRepository(meals: const []);
+    await pumpApp(tester, repository);
+    await tester.pumpAndSettle();
+    clearInteractions(repository);
+
+    await tester.fling(find.text(l10n.emptyMeals), const Offset(0, 400), 1000);
+    await tester.pumpAndSettle();
+
+    verify(
+      () => repository.search('', forceRefresh: true),
+    ).called(1);
+  });
+
   testWidgets('typing searches once, after the debounce', (tester) async {
     final repository = stubbedRepository();
     await pumpApp(tester, repository);

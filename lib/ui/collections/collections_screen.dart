@@ -6,6 +6,7 @@ import 'package:flutter_showcase/router.dart';
 import 'package:flutter_showcase/ui/collections/collection_actions.dart';
 import 'package:flutter_showcase/ui/collections/collections_view_model.dart';
 import 'package:flutter_showcase/ui/core/l10n.dart';
+import 'package:flutter_showcase/ui/core/run_command.dart';
 import 'package:flutter_showcase/ui/core/widgets/state_views.dart';
 import 'package:go_router/go_router.dart';
 
@@ -20,7 +21,7 @@ class CollectionsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: Text(l10n.collectionsTab)),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => unawaited(_create(context, viewModel)),
+        onPressed: () => runCommand(context, () => _create(context, viewModel)),
         icon: const Icon(Icons.add),
         label: Text(l10n.newCollection),
       ),

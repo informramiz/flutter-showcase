@@ -80,11 +80,24 @@ class PlannerViewModel extends _$PlannerViewModel {
     }
   }
 
-  Future<void> remove(PlannedMeal entry) async {
+  Future<void> remove(
+    PlannedMeal entry, {
+    required ReminderText reminder,
+  }) async {
+    if (!entry.reminderEnabled) {
+      await _repository.remove(entry.entryId);
+      return;
+    }
     // Cancel first: a failed cancel leaves the entry (and its reminder) in
-    // place instead of an orphaned weekly notification.
-    if (entry.reminderEnabled) await _reminders.cancel(entry.entryId);
-    await _repository.remove(entry.entryId);
+    // place instead of an orphaned weekly notification. If the delete then
+    // fails, put the reminder back.
+    await _reminders.cancel(entry.entryId);
+    try {
+      await _repository.remove(entry.entryId);
+    } on Object {
+      await _schedule(entry, reminder);
+      rethrow;
+    }
   }
 
   /// Turns [entry]'s weekly cook reminder on or off. Returns `false` when
@@ -104,8 +117,15 @@ class PlannerViewModel extends _$PlannerViewModel {
         rethrow;
       }
     } else {
-      await _repository.setReminder(entry.entryId, enabled: false);
+      // Cancel first, so a failed cancel leaves flag and notification as they
+      // were; if saving then fails, put the notification back.
       await _reminders.cancel(entry.entryId);
+      try {
+        await _repository.setReminder(entry.entryId, enabled: false);
+      } on Object {
+        await _schedule(entry, text);
+        rethrow;
+      }
     }
     return true;
   }

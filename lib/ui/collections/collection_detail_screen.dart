@@ -4,6 +4,7 @@ import 'package:flutter_showcase/router.dart';
 import 'package:flutter_showcase/ui/collections/collection_actions.dart';
 import 'package:flutter_showcase/ui/collections/collections_view_model.dart';
 import 'package:flutter_showcase/ui/core/l10n.dart';
+import 'package:flutter_showcase/ui/core/run_command.dart';
 import 'package:flutter_showcase/ui/core/widgets/meal_thumbnail.dart';
 import 'package:flutter_showcase/ui/core/widgets/state_views.dart';
 import 'package:go_router/go_router.dart';
@@ -60,7 +61,8 @@ class CollectionDetailScreen extends ConsumerWidget {
                   trailing: IconButton(
                     tooltip: l10n.removeFromCollection,
                     icon: const Icon(Icons.remove_circle_outline),
-                    onPressed: () => viewModel.remove(meals[i]),
+                    onPressed: () =>
+                        runCommand(context, () => viewModel.remove(meals[i])),
                   ),
                   onTap: () => context.push(
                     Routes.mealFrom(Routes.collection(id), meals[i].id),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_showcase/router.dart';
 import 'package:flutter_showcase/ui/core/l10n.dart';
+import 'package:flutter_showcase/ui/core/run_command.dart';
 import 'package:flutter_showcase/ui/core/theme/theme_mode_controller.dart';
 import 'package:flutter_showcase/ui/core/widgets/freshness_bar.dart';
 import 'package:flutter_showcase/ui/core/widgets/meal_card.dart';
@@ -45,25 +46,37 @@ class MealsScreen extends ConsumerWidget {
                 error: error,
                 onRetry: viewModel.retry,
               ),
-              data: (list) => list.isEmpty
-                  ? EmptyView(
-                      title: context.l10n.emptyMeals,
-                      hint: context.l10n.emptyMealsHint,
-                    )
-                  : RefreshIndicator(
-                      onRefresh: viewModel.refresh,
-                      child: ListView.builder(
+              data: (list) => RefreshIndicator(
+                onRefresh: viewModel.refresh,
+                child: list.isEmpty
+                    ? LayoutBuilder(
+                        builder: (context, constraints) =>
+                            SingleChildScrollView(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              child: SizedBox(
+                                height: constraints.maxHeight,
+                                child: EmptyView(
+                                  title: context.l10n.emptyMeals,
+                                  hint: context.l10n.emptyMealsHint,
+                                ),
+                              ),
+                            ),
+                      )
+                    : ListView.builder(
+                        physics: const AlwaysScrollableScrollPhysics(),
                         padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
                         itemCount: list.length,
                         itemBuilder: (context, i) => MealCard(
                           meal: list[i],
                           isFavourite: state.favouriteIds.contains(list[i].id),
-                          onToggleFavourite: () =>
-                              viewModel.toggleFavourite(list[i]),
+                          onToggleFavourite: () => runCommand(
+                            context,
+                            () => viewModel.toggleFavourite(list[i]),
+                          ),
                           onTap: () => context.push(Routes.meal(list[i].id)),
                         ),
                       ),
-                    ),
+              ),
             ),
           ),
         ],

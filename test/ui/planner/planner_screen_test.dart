@@ -5,6 +5,13 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../helpers/fixtures.dart';
 import '../../helpers/harness.dart';
 
+class _FailingRemovePlanner extends FakePlannerRepository {
+  _FailingRemovePlanner(super.plan);
+
+  @override
+  Future<void> remove(int entryId) => Future.error(StateError('disk'));
+}
+
 void main() {
   setUp(() => WidgetController.hitTestWarningShouldBeFatal = true);
   PlannedMeal entry(int id, int position, {PlanDay day = PlanDay.monday}) =>
@@ -103,6 +110,17 @@ void main() {
       'remove 2',
     ]);
     expect(find.text('Chicken Curry'), findsNothing);
+  });
+
+  testWidgets('a failed command shows a message instead of crashing', (
+    tester,
+  ) async {
+    await openPlanner(tester, _FailingRemovePlanner([entry(1, 0)]));
+
+    await chooseFromMenu(tester, 1, l10n.remove);
+
+    expect(find.text(l10n.errorUnknown), findsOneWidget);
+    expect(find.text('Spaghetti Bolognese'), findsOneWidget);
   });
 
   testWidgets('the cart opens the shopping list', (tester) async {

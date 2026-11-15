@@ -15,7 +15,7 @@ class App extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
     ref.listen(cookReminderTapsProvider, (_, tap) {
-      if (tap case AsyncData(:final value)) unawaited(router.push(value));
+      if (tap case AsyncData(:final value)) unawaited(router.push(value.route));
     });
     return MaterialApp.router(
       onGenerateTitle: (context) => context.l10n.appTitle,

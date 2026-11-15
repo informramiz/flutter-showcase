@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_showcase/domain/models/meal.dart';
 import 'package:flutter_showcase/ui/collections/save_to_collection_sheet.dart';
+import 'package:flutter_showcase/ui/core/failure_message.dart';
 import 'package:flutter_showcase/ui/core/l10n.dart';
 import 'package:flutter_showcase/ui/core/plan_labels.dart';
+import 'package:flutter_showcase/ui/core/run_command.dart';
 import 'package:flutter_showcase/ui/core/widgets/freshness_bar.dart';
 import 'package:flutter_showcase/ui/core/widgets/meal_thumbnail.dart';
 import 'package:flutter_showcase/ui/core/widgets/state_views.dart';
@@ -47,7 +49,7 @@ class MealDetailScreen extends ConsumerWidget {
               icon: Icon(
                 state.isFavourite ? Icons.favorite : Icons.favorite_border,
               ),
-              onPressed: viewModel.toggleFavourite,
+              onPressed: () => runCommand(context, viewModel.toggleFavourite),
             ),
         ],
       ),
@@ -78,7 +80,14 @@ Future<void> _addToPlan(
   final messenger = ScaffoldMessenger.of(context);
   final target = await showPlanSlotSheet(context, title: l10n.addToPlan);
   if (target == null) return;
-  if (!await viewModel.addToPlan(target.day, target.slot)) return;
+  final bool added;
+  try {
+    added = await viewModel.addToPlan(target.day, target.slot);
+  } on Object catch (error) {
+    messenger.showSnackBar(SnackBar(content: Text(describeError(error, l10n))));
+    return;
+  }
+  if (!added) return;
   messenger.showSnackBar(
     SnackBar(
       content: Text(
@@ -97,6 +106,7 @@ class _MealBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
       children: [
         AspectRatio(
           aspectRatio: 16 / 10,

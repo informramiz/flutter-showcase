@@ -129,7 +129,7 @@ go_router with a `StatefulShellRoute.indexedStack`: Meals, Favourites, Planner a
 
 ## Run
 
-Requires Flutter 3.38 or newer on the stable channel. Generated files (`*.g.dart`, `*.freezed.dart`) are not committed; drift's migration steps and schema files are.
+Requires Flutter 3.38.7 or newer on the stable channel (the Dart `^3.10.7` constraint in `pubspec.yaml`). Generated files (`*.g.dart`, `*.freezed.dart`) are not committed; drift's migration steps and schema files are.
 
 ```bash
 flutter pub get
@@ -157,7 +157,7 @@ flutter build web
 - **Data**: the API service against a stubbed Dio adapter, DTO mapping, the stale-while-revalidate paths, every repository and DAO against an in-memory drift database, the reminder service against a mocked plugin.
 - **Migration**: `migration_test.dart` upgrades v1 to v2 and verifies schema and data.
 - **ViewModels**: through `ProviderContainer` with fake repositories and a fake clock (debounce, filters, planner moves, reminders on, off and denied, collections).
-- **Widgets**: every screen's loading, error, empty and data states, the save-to-collection sheet, deep links (sent as platform route messages), notification taps, the Hero flight, and golden tests for the error view in light and dark.
+- **Widgets**: the recipe list and detail states, the planner, shopping list, favourites and collections screens, the save-to-collection sheet, deep links (sent as platform route messages), notification taps, the Hero flight, and golden tests for the error view in light and dark.
 
 Not covered: `main.dart` startup wiring, the plugins themselves on a device, and real network calls. Tests never hit TheMealDB.
 
