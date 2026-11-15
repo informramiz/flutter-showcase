@@ -54,13 +54,13 @@ flowchart TD
 
 - **View**: watches one immutable freezed UI state and calls ViewModel commands. No business logic.
 - **ViewModel**: a Riverpod `Notifier` per screen (`MealsViewModel`, `MealDetailViewModel`, `FavouritesViewModel`, `PlannerViewModel`, `ShoppingListViewModel`, `CollectionsViewModel`) exposing a single UI state and commands.
-- **Repository**: interfaces in `domain/repositories`; implementations in `data/repositories` own the cache policy, mapping and writes, and expose `Stream`s so every screen updates together.
+- **Repository**: interfaces in `domain/repositories`; implementations in `data/repositories` own the cache policy, mapping and writes, and expose `Stream`s. Collections, favourites, the plan and the shopping list watch drift queries and update live; recipe lists and details are one-shot snapshots (cache, then network) that finish after the refresh.
 - **Service**: thin wrappers around one outside thing: `MealApiService` (Dio), `ConnectivityService`, `PreferencesService`, `CookReminderService`.
 - **Domain logic** is plain Dart with no Flutter import: `ShoppingListBuilder`, `IngredientMeasureParser`, `nextCookReminder`, collection name rules.
 
 ### Offline-first flow
 
-The database is the source of truth; the network only refreshes it ([Flutter offline-first guide](https://docs.flutter.dev/app-architecture/design-patterns/offline-first)). Every read goes through one `staleWhileRevalidate` helper:
+The database is the source of truth for user data and the recipe cache; the network only refreshes the cache ([Flutter offline-first guide](https://docs.flutter.dev/app-architecture/design-patterns/offline-first)). Every read goes through one `staleWhileRevalidate` helper:
 
 ```mermaid
 flowchart TD
@@ -172,7 +172,7 @@ Not covered: `main.dart` startup wiring, the plugins themselves on a device, and
 
 ## Decisions and trade-offs
 
-- **drift as the single source of truth.** The app now caches recipes, plans weeks and groups meals, which is relational data that needs queries, joins and migrations. Screens read only from the database; the network only refreshes it. shared_preferences is kept just for the theme setting.
+- **drift as the single source of truth.** The app now caches recipes, plans weeks and groups meals, which is relational data that needs queries, joins and migrations. Collections, favourites, the plan and the shopping list read only from the database. Recipe lists and details are served from the cache and refreshed once from the network (snapshot, not a live query). shared_preferences is kept just for the theme setting.
 - **Stale-while-revalidate over cache-then-network.** Showing a fresh-enough cache with no request saves data and battery; a stale cache is still shown at once. Max ages are constants in one place.
 - **API key `1`.** TheMealDB documents `1` as its public test key, so there is no secret to hide. For a commercial product you would use their paid key through a proxy.
 - **Sealed `Result` and `AppFailure`.** Exhaustive `switch` over failures means adding a new failure type breaks the build until every screen handles it. `guard` converts only `AppFailure`, so programmer errors still crash loudly in tests.

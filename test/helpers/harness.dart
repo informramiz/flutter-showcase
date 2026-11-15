@@ -150,6 +150,20 @@ class FakePlannerRepository implements PlannerRepository {
   @override
   Future<void> move(int entryId, PlanDay day, MealSlot slot, int index) async {
     calls.add('move $entryId ${day.name} ${slot.name} $index');
+    final moved = _plan
+        .firstWhere((e) => e.entryId == entryId)
+        .copyWith(day: day, slot: slot);
+    final others = _plan.where((e) => e.entryId != entryId).toList();
+    final target = others.where((e) => e.day == day && e.slot == slot).toList()
+      ..insert(index.clamp(0, others.length), moved);
+    final renumbered = <int, PlannedMeal>{
+      for (final (i, e) in target.indexed) e.entryId: e.copyWith(position: i),
+    };
+    _plan = [
+      for (final e in [...others, moved])
+        if (e.day == day && e.slot == slot) renumbered[e.entryId]! else e,
+    ]..sort((a, b) => a.position.compareTo(b.position));
+    _planChanges.add(_plan);
   }
 
   @override

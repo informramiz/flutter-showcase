@@ -57,10 +57,18 @@ class MealApiService {
         path,
         queryParameters: query,
       );
-      final meals = response.data?['meals'];
+      final data = response.data;
+      // A missing key is a malformed answer; only an explicit null is "empty".
+      if (data == null || !data.containsKey('meals')) {
+        throw const ParseFailure();
+      }
+      final meals = data['meals'];
       if (meals == null) return const [];
       if (meals is! List<dynamic>) throw const ParseFailure();
-      return meals.whereType<Map<String, dynamic>>().toList();
+      if (meals.any((m) => m is! Map<String, dynamic>)) {
+        throw const ParseFailure();
+      }
+      return meals.cast<Map<String, dynamic>>();
     } on DioException catch (e) {
       throw FailureInterceptor.mapFailure(e);
     }

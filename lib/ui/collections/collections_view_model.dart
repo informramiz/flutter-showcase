@@ -117,13 +117,10 @@ class SaveToCollectionViewModel extends _$SaveToCollectionViewModel {
 
   /// Command: "New collection" in the sheet. Creates it with [meal] inside.
   Future<void> createWith(String name, Meal meal) async {
-    final id = await ref
-        .read(collectionsViewModelProvider.notifier)
-        .create(
-          name,
-        );
-    await ref
-        .read(collectionsRepositoryProvider)
-        .setMembership(id, meal, included: true);
+    // Read before awaiting: the sheet may close (disposing this notifier)
+    // while the collection is being created, and a disposed `ref` throws.
+    final repository = ref.read(collectionsRepositoryProvider);
+    final id = await repository.create(name);
+    await repository.setMembership(id, meal, included: true);
   }
 }

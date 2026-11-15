@@ -42,9 +42,7 @@ void main() {
     await repository.setMembership(b, pasta, included: true);
 
     expect(await repository.watchCollectionIdsFor(pasta.id).first, {a, b});
-    expect(await repository.watchMeals(a).first, [
-      pasta.copyWith(area: null),
-    ]);
+    expect(await repository.watchMeals(a).first, [pasta]);
   });
 
   test('removing a meal leaves the collection and other meals', () async {
