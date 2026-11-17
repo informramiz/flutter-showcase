@@ -2,6 +2,8 @@
 
 **Live demo: https://informramiz.github.io/flutter-showcase/** (web build of the same app, best viewed at phone width)
 
+![Meal Finder on an Android emulator: browse meals, open a meal, favourite it, save it to a collection, plan it, tick the shopping list and switch to the dark theme](docs/demo/meal-finder-demo.gif)
+
 A recipe browser built with Flutter (stable 3.38, Dart 3) and Riverpod. It reads [TheMealDB](https://www.themealdb.com/api.php), a free public API with no sign-up, and keeps favourites on the device.
 
 Built by Ramiz Raja as a complete example of production-style Flutter: MVVM with repositories, an offline-first drift database, a schema migration with tests, deep links, local notifications, localisation, strict lints and CI with a coverage gate.
@@ -26,6 +28,9 @@ Meals, detail, favourites and dark theme on each platform (planner, shopping lis
 | iOS | <img src="docs/screenshots/ios-meals.png" width="160"> | <img src="docs/screenshots/ios-detail.png" width="160"> | <img src="docs/screenshots/ios-favourites.png" width="160"> | <img src="docs/screenshots/ios-dark.png" width="160"> |
 | Android | <img src="docs/screenshots/android-meals.png" width="160"> | <img src="docs/screenshots/android-detail.png" width="160"> | <img src="docs/screenshots/android-favourites.png" width="160"> | <img src="docs/screenshots/android-dark.png" width="160"> |
 | Web | <img src="docs/screenshots/web-1-meals.png" width="160"> | <img src="docs/screenshots/web-2-detail.png" width="160"> | <img src="docs/screenshots/web-3-favourites.png" width="160"> | <img src="docs/screenshots/web-4-meals-dark.png" width="160"> |
+
+Demo recording (69 s, Android emulator): [docs/demo/meal-finder-demo.mp4](docs/demo/meal-finder-demo.mp4).
+It shows browsing, a meal detail, favouriting, saving to a new collection, planning two meals, the summed shopping list with checked items, and the dark theme.
 
 ## Architecture
 
